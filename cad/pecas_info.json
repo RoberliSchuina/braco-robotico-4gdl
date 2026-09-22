@@ -1,0 +1,107 @@
+[
+  {
+    "arquivo": "01_base_fixa.stl",
+    "nome": "Base fixa",
+    "funcao": "Apoio do braço; abriga o servo S1 (rotação da base)",
+    "dimensoes_mm": [
+      110.0,
+      110.0,
+      40.3
+    ],
+    "volume_solido_cm3": 59.7,
+    "massa_estimada_g": 40.7,
+    "tempo_estimado_min": 122,
+    "triangulos": 3530,
+    "impressao": "Disco para baixo. Tampa da torre faz ponte de 18 mm (OK na A1; opcionalmente ativar suportes)."
+  },
+  {
+    "arquivo": "02_plataforma_giratoria.stl",
+    "nome": "Plataforma giratória",
+    "funcao": "Fixa no horn de S1; sustenta o servo S2 (ombro)",
+    "dimensoes_mm": [
+      60.0,
+      60.0,
+      44.0
+    ],
+    "volume_solido_cm3": 17.2,
+    "massa_estimada_g": 11.7,
+    "tempo_estimado_min": 35,
+    "triangulos": 5712,
+    "impressao": "Disco para baixo (bolso do horn fica na 1ª camada). Sem suportes."
+  },
+  {
+    "arquivo": "03_braco.stl",
+    "nome": "Braço (elo superior)",
+    "funcao": "Liga o ombro (S2) ao cotovelo (S3)",
+    "dimensoes_mm": [
+      34.0,
+      104.0,
+      4.0
+    ],
+    "volume_solido_cm3": 10.4,
+    "massa_estimada_g": 7.1,
+    "tempo_estimado_min": 21,
+    "triangulos": 3012,
+    "impressao": "Deitado, bolso do horn para cima. Sem suportes."
+  },
+  {
+    "arquivo": "04_antebraco.stl",
+    "nome": "Antebraço (elo inferior)",
+    "funcao": "Liga o cotovelo (S3) à garra; suporta S4 e o pino da engrenagem livre",
+    "dimensoes_mm": [
+      48.0,
+      93.0,
+      4.0
+    ],
+    "volume_solido_cm3": 12.1,
+    "massa_estimada_g": 8.2,
+    "tempo_estimado_min": 25,
+    "triangulos": 3118,
+    "impressao": "Deitado, bolso do horn para cima. Sem suportes."
+  },
+  {
+    "arquivo": "05_garra_dedo_motriz.stl",
+    "nome": "Dedo motriz da garra",
+    "funcao": "Engrenagem acionada pelo horn de S4 + dedo",
+    "dimensoes_mm": [
+      26.4,
+      68.2,
+      4.0
+    ],
+    "volume_solido_cm3": 3.3,
+    "massa_estimada_g": 2.3,
+    "tempo_estimado_min": 7,
+    "triangulos": 2582,
+    "impressao": "Deitado, bolso do horn para cima. Sem suportes."
+  },
+  {
+    "arquivo": "06_garra_dedo_livre.stl",
+    "nome": "Dedo livre da garra",
+    "funcao": "Engrenagem espelhada que gira no pino M3 + dedo",
+    "dimensoes_mm": [
+      26.1,
+      68.0,
+      14.8
+    ],
+    "volume_solido_cm3": 4.2,
+    "massa_estimada_g": 2.9,
+    "tempo_estimado_min": 9,
+    "triangulos": 956,
+    "impressao": "Deitado, ressalto para cima. Sem suportes."
+  },
+  {
+    "arquivo": "07_suporte_joysticks.stl",
+    "nome": "Suporte dos joysticks",
+    "funcao": "Controle de mão: fixa os 2 módulos KY-023 (parafusos M3)",
+    "dimensoes_mm": [
+      160.0,
+      100.0,
+      7.0
+    ],
+    "volume_solido_cm3": 53.6,
+    "massa_estimada_g": 36.6,
+    "tempo_estimado_min": 110,
+    "triangulos": 4248,
+    "impressao": "Deitado, ressaltos para cima. Sem suportes."
+  }
+]

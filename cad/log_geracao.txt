@@ -1,0 +1,8 @@
+01_base_fixa                  110.0 x  110.0 x   40.3 mm  vol= 59.7 cm3  ~40.7 g  faces=3530
+02_plataforma_giratoria        60.0 x   60.0 x   44.0 mm  vol= 17.2 cm3  ~11.7 g  faces=5712
+03_braco                       34.0 x  104.0 x    4.0 mm  vol= 10.4 cm3  ~ 7.1 g  faces=3012
+04_antebraco                   48.0 x   93.0 x    4.0 mm  vol= 12.1 cm3  ~ 8.2 g  faces=3118
+05_garra_dedo_motriz           26.4 x   68.2 x    4.0 mm  vol=  3.3 cm3  ~ 2.3 g  faces=2582
+06_garra_dedo_livre            26.1 x   68.0 x   14.8 mm  vol=  4.2 cm3  ~ 2.9 g  faces=956
+07_suporte_joysticks          160.0 x  100.0 x    7.0 mm  vol= 53.6 cm3  ~36.6 g  faces=4248
+OK -> C:\Users\Ludmilla\OneDrive\Área de Trabalho\Roberli_Faesa\2026.02\SISTEMAS EMBARCADOS\Braço Mecânico\STL C:\Users\Ludmilla\OneDrive\Área de Trabalho\Roberli_Faesa\2026.02\SISTEMAS EMBARCADOS\Braço Mecânico\imagens

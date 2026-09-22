@@ -1,0 +1,12 @@
+# Python
+__pycache__/
+*.pyc
+
+# Arduino build output
+firmware/**/build/
+
+# Word / OneDrive temporários
+~$*.docx
+*.tmp
+desktop.ini
+Thumbs.db

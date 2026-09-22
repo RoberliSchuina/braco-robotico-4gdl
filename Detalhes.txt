@@ -1,0 +1,26 @@
+Detalhes do Projeto:
+
+Projeto da disciplina Sistemas Embarcados, do curso de engenharia da computação da FAESA, que possui o seguinte objetivo:
+
+1. Construir um braço robótico usando uma plataforma de prototipação (Arduino);
+
+O que precisa ser feito:  
+
+1. Listar os componentes necessários para este projeto;
+2. Desenhar o modelo em 3D de cada peça no tinkercad 3D (arquivos separados) e gerar os arquivos STL individualmente;
+3. Desenhar o protótipo montado (em qualquer software);
+4. Escrever o código que será executado no (ARDUINO IDE);
+
+
+Impressora que será utilizada para a impressão das peças: BAMBU LAB A1 - Necessário atender as especificações técnicas da impressora;
+Precisão recomendada: 0,2mm;
+Densidade da peça gerada: 15%;
+
+
+Links úteis: 
+
+1. TINKERCAD (AREA PESSOAL): https://www.tinkercad.com/dashboard;
+
+
+
+
