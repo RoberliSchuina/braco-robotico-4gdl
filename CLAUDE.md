@@ -18,6 +18,9 @@ Entregas: BOM, peças 3D (Tinkercad, uma por arquivo) + STL, protótipo montado,
 - [ ] Preencher nome do aluno/professor na capa do relatório; abrir no Word e aceitar "atualizar campos" (sumário)
 - [ ] Imprimir, montar, calibrar `ANG_MIN/ANG_MAX` no firmware e registrar resultados dos testes na seção 9.3
 
+## Regra: sincronizar com o GitHub
+Toda alteração em arquivos deste diretório (fonte ou regenerados) deve terminar com `git add -A && git commit -m "..." && git push` para `RoberliSchuina/braco-robotico-4gdl` — pedido do usuário em 2026-09-21, autorização permanente (não perguntar). Se o push falhar, avisar.
+
 ## Como regenerar tudo
 ```bash
 pip install trimesh manifold3d shapely numpy matplotlib python-docx
