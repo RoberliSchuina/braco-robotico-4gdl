@@ -9,6 +9,7 @@ Entregas: BOM, peças 3D (Tinkercad, uma por arquivo) + STL, protótipo montado,
 - [x] Firmware `firmware/braco_robotico/braco_robotico.ino` (4 servos, 2 joysticks KY-023, gravar/reproduzir, serial, EEPROM)
 - [x] 2026-09-19: potenciômetros + botão avulso substituídos por 2 joysticks KY-023 (firmware, esquema, BOM e relatório atualizados; mecânica inalterada)
 - [x] Esquema elétrico `imagens/esquema_eletrico.png`
+- [x] 2026-09-21: repositório GitHub privado `RoberliSchuina/braco-robotico-4gdl` (remote `origin`, branch `main`); `gh` instalado em `C:\Program Files\GitHub CLI\` e autenticado. Após alterar/regenerar: `git add -A && git commit && git push`
 - [x] 2026-09-20: guia de ligações furo a furo `Circuito_Braco_Robotico.html` (mesmo formato do Lab 1; SVG da protoboard + lista numerada + verificação; esquema PNG embutido em base64 — regerar o PNG exige reembutir)
 - [x] Relatório `relatorio/Relatorio_Braco_Robotico.docx` (gerado por `relatorio/gerar_relatorio.py`)
 - [x] Lista de parafusos/fixadores à parte: dados em `relatorio/parafusos.py` → `Lista_Parafusos_Fixadores.docx` (gerar_lista_parafusos.py) e Apêndice C do relatório. Alterar parafuso = editar só `parafusos.py` e rodar os dois geradores.
