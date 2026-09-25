@@ -133,5 +133,35 @@
     "tempo_estimado_min": 115,
     "triangulos": 4014,
     "impressao": "Deitado, berços para cima. Sem suportes."
+  },
+  {
+    "arquivo": "10_garra_v_dedo_motriz.stl",
+    "nome": "Dedo motriz da garra em V (opção B)",
+    "funcao": "Alternativa ao 07: mandíbula com entalhe em V que auto-centra cilindros e esferas",
+    "dimensoes_mm": [
+      26.4,
+      68.2,
+      4.0
+    ],
+    "volume_solido_cm3": 3.3,
+    "massa_estimada_g": 2.3,
+    "tempo_estimado_min": 7,
+    "triangulos": 2594,
+    "impressao": "Deitado, bolso do horn para cima. Sem suportes."
+  },
+  {
+    "arquivo": "11_garra_v_dedo_livre.stl",
+    "nome": "Dedo livre da garra em V (opção B)",
+    "funcao": "Alternativa ao 08: mesma engrenagem espelhada, com o entalhe em V",
+    "dimensoes_mm": [
+      26.1,
+      68.0,
+      14.8
+    ],
+    "volume_solido_cm3": 4.2,
+    "massa_estimada_g": 2.9,
+    "tempo_estimado_min": 9,
+    "triangulos": 966,
+    "impressao": "Deitado, ressalto para cima. Sem suportes."
   }
 ]

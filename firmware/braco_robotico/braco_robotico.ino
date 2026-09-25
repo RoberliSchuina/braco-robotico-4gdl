@@ -28,6 +28,8 @@
  *    (garra: 74° ≈ fechada, 110° = aberta — valores nominais, calibrar; os dedos se tocam em ~72,5°)
  *    A garra é montada sob a palma, com as engrenagens de eixo vertical: com o antebraço na horizontal as
  *    mandíbulas fecham num PLANO HORIZONTAL (o braço agarra o objeto pelos lados, apoiado na mesa).
+ *    Há dois pares de dedos intercambiáveis (mandíbula plana e mandíbula em V, auto-centrante para
+ *    cilindros e esferas em pé). Os dois têm o mesmo ângulo de toque, então nada muda aqui na troca.
  *  COMANDOS SERIAIS (115200 bps) — calibração e depuração:
  *    p  imprime posições      g  grava pose        l  limpa poses       r  reproduz/para
  *    m  manual (para)         h  home              a  abre/fecha garra  j  recalibra centro dos joysticks

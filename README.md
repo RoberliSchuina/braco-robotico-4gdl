@@ -3,7 +3,7 @@
 | Entrega | Onde está |
 |---|---|
 | Lista de componentes | `relatorio/Relatorio_Braco_Robotico.docx` (seção 4) |
-| Peças 3D (uma por arquivo) + STL | `STL/01_…09_*.stl` (09 = suporte dos joysticks) — importar cada uma em um projeto do Tinkercad (Importar → STL) |
+| Peças 3D (uma por arquivo) + STL | `STL/01_…11_*.stl` (09 = suporte dos joysticks; 10/11 = garra alternativa em V) — importar cada uma em um projeto do Tinkercad (Importar → STL) |
 | Protótipo montado | `STL/montagem_completa.stl`, `imagens/montagem_*.png` |
 | Código Arduino IDE | `firmware/braco_robotico/braco_robotico.ino` (placa UNO; libs Servo + EEPROM) |
 | Esquema elétrico | `imagens/esquema_eletrico.png` |
@@ -14,6 +14,8 @@
 Impressão (Bambu Lab A1): PLA, bico 0,4 mm, camada 0,20 mm, preenchimento 15 %, 3 paredes, sem suportes, peças já orientadas nos STL (≈ 132 g, ≈ 6,6 h).
 
 **Revisão de 2026-09-24 — estrutura em forquilha e garra horizontal.** Cada elo passou a ter duas chapas laterais simétricas em relação ao plano de rotação da base (03/04 = braço, 05/06 = antebraço), amarradas por uma travessa aparafusada; o servo trabalha entre elas e o lado oposto gira num munhão Ø9 impresso, em cisalhamento duplo. A garra foi para baixo da palma, com as engrenagens de eixo vertical: com o antebraço na horizontal as mandíbulas fecham num plano horizontal e o braço agarra o objeto pelos lados (captura na horizontal). O suporte dos joysticks ganhou berço de cantos em L e rasgos radiais, porque a furação do KY-023 não é padronizada.
+
+**Duas opções de garra.** Opção A (peças 07/08, mandíbula plana) para objetos de faces planas — blocos, caixinhas, cartões. Opção B (peças 10/11, mandíbula em V de 95°) para cilindros e esferas: contato em 4 pontos, o objeto se auto-centra e não rola; como a garra fecha no plano horizontal, o sulco do V fica vertical e pega caneta, pilha ou frasco em pé na mesa. As duas usam a mesma engrenagem e os mesmos parafusos — a troca leva dois minutos e não muda o firmware (ver `imagens/garras.png`).
 
 Regenerar tudo: `python cad/gerar_pecas.py && python cad/gerar_esquema.py && python relatorio/gerar_relatorio.py && python relatorio/gerar_lista_parafusos.py`\nConferir a mecânica (colisões, engrenagens, envelope e torque): `python cad/verificacao.py`
 (requer `pip install trimesh manifold3d shapely numpy matplotlib python-docx`).

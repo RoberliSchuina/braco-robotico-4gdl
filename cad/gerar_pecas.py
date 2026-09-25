@@ -259,15 +259,24 @@ def antebraco_livre():
     jan_palma = box(PALMA_X[0] - 1, PALMA_X[1] + 1, 3, 16, 52, 74)
     return subtrai(corpo, janela, servo, pino, jan_palma, *pil)
 
-def dedo(motriz=True):
+def dedo(motriz=True, tipo='plana'):
     """Dedo da garra = engrenagem (16 dentes, m=1,5) + haste 10x55 + mandíbula.
+    tipo 'plana': mandíbula reta 10 x 12 — objetos prismáticos (caixas, blocos, peças chatas).
+    tipo 'v'    : mandíbula 10 x 17 com entalhe em V de ~95° — auto-centra cilindros e esferas. Com a garra
+                  na horizontal o sulco do V fica VERTICAL, ou seja, segura canetas, pilhas e frascos em pé.
+    Os dois tipos têm a mesma engrenagem e a mesma interface de montagem: é troca direta.
     motriz: bolso do horn de S4 na face superior.  livre: ressalto Ø9 x 10,8 + furo Ø3,4 (pino M3)."""
     fase = 0.0 if motriz else 360 / GEAR_N / 2       # meio passo: engrena com a motriz
     eng = extrude_polygon(engrenagem_poly(fase_graus=fase), ESP)
     s = 1 if motriz else -1                          # lado da mandíbula (aponta para o centro da garra)
     haste = box(-5, 5, 0, 55, 0, ESP)
-    mand = box(min(0, s * 10), max(0, s * 10), 43, 55, 0, ESP)
+    y0 = 43 if tipo == 'plana' else 38               # o V precisa de mandíbula mais longa
+    mand = box(min(0, s * 10), max(0, s * 10), y0, 55, 0, ESP)
     corpo = uniao(eng, haste, mand)
+    if tipo == 'v':                                  # entalhe: apex 5 mm dentro da face, abertura 11 mm
+        tri = Polygon([(s * 10.5, 41.0), (s * 10.5, 52.0), (s * 5.0, 46.5)])
+        corte = extrude_polygon(tri, ESP + 2); corte.apply_translation([0, 0, -1])
+        corpo = subtrai(corpo, corte)
     if motriz:
         horn = coloca(corte_horn('simples'), (0, 0, ESP), (0, 0, -1), (0, 1, 0))
         return subtrai(corpo, horn)
@@ -361,6 +370,10 @@ PECAS = [
      "Deitado, ressalto para cima. Sem suportes."),
     ("09_suporte_joysticks", "Suporte dos joysticks", "Controle de mão: berço dos 2 módulos KY-023 (4 rasgos M3 cada)", suporte_joysticks, np.eye(4),
      "Deitado, berços para cima. Sem suportes."),
+    ("10_garra_v_dedo_motriz", "Dedo motriz da garra em V (opção B)", "Alternativa ao 07: mandíbula com entalhe em V que auto-centra cilindros e esferas", lambda: dedo(True, 'v'), np.eye(4),
+     "Deitado, bolso do horn para cima. Sem suportes."),
+    ("11_garra_v_dedo_livre", "Dedo livre da garra em V (opção B)", "Alternativa ao 08: mesma engrenagem espelhada, com o entalhe em V", lambda: dedo(False, 'v'), np.eye(4),
+     "Deitado, ressalto para cima. Sem suportes."),
 ]
 
 def exporta_peca(arquivo, mesh, Timp):
@@ -440,7 +453,26 @@ def render(itens, arquivo, vistas):
         ax.set_xlabel('X (mm)'); ax.set_ylabel('Y (mm)'); ax.set_zlabel('Z (mm)')
     plt.tight_layout(); fig.savefig(arquivo, facecolor='white'); plt.close(fig)
 
-CORES_PECAS = ["#d9d9d9", "#f0a04b", "#5aa469", "#78c08a", "#e06666", "#ef8f8f", "#8e7cc3", "#a694d6", "#6fa8dc"]
+CORES_PECAS = ["#d9d9d9", "#f0a04b", "#5aa469", "#78c08a", "#e06666", "#ef8f8f", "#8e7cc3", "#a694d6", "#6fa8dc",
+               "#c27ba0", "#d6a2bd"]
+
+def objeto_dummy(tipo):
+    """Objetos de referência nos renders da garra (só ilustração)."""
+    if tipo == 'cubo':
+        return box(-12.5, 12.5, -12.5, 12.5, -20, 20)          # bloco 25 x 25
+    return cyl(8, 40, (0, 0, 0), 'z')                          # cilindro Ø16 (caneta/pilha em pé)
+
+def cena_garras(pecas, alfa_plana=13.0, alfa_v=5.0):
+    """As duas opções de garra lado a lado, vistas pelo eixo das engrenagens (o sulco do V é vertical na
+    montagem, então esta vista é a que o objeto 'enxerga' chegando de frente)."""
+    itens = []
+    for dy, sufixo, alfa, obj in [(0.0, ("07_garra_dedo_motriz", "08_garra_dedo_livre"), alfa_plana, 'cubo'),
+                                  (120.0, ("10_garra_v_dedo_motriz", "11_garra_v_dedo_livre"), alfa_v, 'cilindro')]:
+        motriz, livre = sufixo
+        itens.append((pecas[motriz].copy().apply_transform(T(dy - Y_GARRA, 0, 0) @ Rz(alfa)), "#8e7cc3"))
+        itens.append((pecas[livre].copy().apply_transform(T(dy + Y_GARRA, 0, 0) @ Rz(-alfa)), "#a694d6"))
+        o = objeto_dummy(obj); o.apply_translation([dy, 46.5, ESP / 2]); itens.append((o, "#7f8c8d"))
+    return itens
 
 def render_pecas(pecas_imp, arquivo):
     """Todas as peças lado a lado, na orientação de impressão (como na mesa da A1)."""
@@ -482,6 +514,8 @@ if __name__ == "__main__":
            [("Posição de repouso (home) — todos os servos em 90°", 20, -60)])
     render(montagem(pecas, th1=0, th2=55, th3=90, alfa=18), os.path.join(DIR_IMG, "montagem_captura.png"),
            [("Captura na horizontal — mandíbulas fecham no plano horizontal", 18, -60), ("Vista superior", 90, -90)])
+    render(cena_garras(pecas), os.path.join(DIR_IMG, "garras.png"),
+           [("Opção A — mandíbula plana (bloco de 25 mm)\nOpção B — mandíbula em V (cilindro Ø16 em pé)", 90, -90)])
     render_pecas(pecas_imp, os.path.join(DIR_IMG, "pecas_impressao.png"))
     joy = joystick_dummy()
     itens_sup = [(pecas["09_suporte_joysticks"], "#6fa8dc")]

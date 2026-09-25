@@ -76,6 +76,9 @@ NOTAS = [
     "Se um munhão entrar apertado no mancal, lixar levemente o Ø9 (lixa 220) até girar livre — não alargar o furo, que é o mancal.",
     "Ferramentas: chave Phillips PH0 (itens 1, 2 e 6), PH1 (itens 3, 9, 10), chave de boca/canhão 5,5 mm (porcas M3), "
     "chave Allen 2,5 mm se optar pela cabeça cilíndrica no item 3.",
+    "A garra tem duas opções de dedos (07/08 com mandíbula plana e 10/11 com mandíbula em V) que usam exatamente os mesmos "
+    "fixadores — o item 3/4/5 serve para qualquer uma das duas e a troca não muda esta lista. Quem imprimir as duas opções "
+    "pode deixar um horn de servo montado em cada dedo motriz (o kit do SG90 traz vários) para trocar mais rápido.",
     "Onde comprar: lojas de parafusos/ferragens (M3), lojas de eletrônica/robótica e kits de micro parafusos (PA 1,7 e 2,0).",
 ]
 

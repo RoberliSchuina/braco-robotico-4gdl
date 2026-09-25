@@ -4,10 +4,11 @@ Projeto da disciplina Sistemas Embarcados (FAESA, Eng. da Computação, 2026/2).
 Entregas: BOM, peças 3D (Tinkercad, uma por arquivo) + STL, protótipo montado, código Arduino IDE, relatório .docx.
 
 ## Estado atual (2026-09-24)
-- [x] 9 peças modeladas (CSG em Python/trimesh) e exportadas em `STL/` na orientação de impressão
+- [x] 11 peças modeladas (CSG em Python/trimesh) e exportadas em `STL/` na orientação de impressão (9 do braço + 2 da garra alternativa)
 - [x] 2026-09-24: **estrutura em forquilha** — cada elo tem 2 chapas laterais simétricas em relação ao plano de rotação da base (pedido do usuário: "duplique a estrutura lateral de modo a equilibrá-la")
 - [x] 2026-09-24: **garra na palma** — engrenagens com eixo ao longo de X do antebraço: com o antebraço na horizontal os eixos ficam verticais e as mandíbulas fecham num plano horizontal (captura lateral)
 - [x] 2026-09-24: berço dos joysticks refeito (cantos em L + rasgos radiais); ver "Suporte dos joysticks"
+- [x] 2026-09-24: **segunda opção de garra** — dedos 10/11 com mandíbula em V (auto-centrante), troca direta com os dedos planos 07/08
 - [x] Montagem (`STL/montagem_completa.stl`) + renders em `imagens/` (inclui `montagem_captura.png`)
 - [x] Firmware `firmware/braco_robotico/braco_robotico.ino` (4 servos, 2 joysticks KY-023, gravar/reproduzir, serial, EEPROM)
 - [x] 2026-09-19: potenciômetros + botão avulso substituídos por 2 joysticks KY-023
@@ -41,6 +42,7 @@ Armadilha de ambiente: patches via `python - <<'EOF'` (heredoc) no Git Bash às 
 - **Travessas**: `04_braco_livre` traz uma travessa integrada (x = −17..−13, z = 56..70) e `06_antebraco_livre` traz a **palma** (x = −14..−10, z = 48..78); ambas atravessam a forquilha e são aparafusadas na chapa motriz com 2 × M3 × 10 em furo-piloto Ø2,5 dentro de um reforço de 8 mm. **São elas que fecham a estrutura** — sem elas as chapas abrem e o munhão sai do mancal.
 - **Plataforma com 2 paredes**: motriz em y = 4..8 (flange de S2 em y = 8) e livre em y = −14..−10 (mancal). A parede livre NÃO é simétrica à motriz porque o corpo do SG90 avança 15,9 mm abaixo do flange e termina em y = −7,9: a parede livre tem de ficar além disso (folga de 2,1 mm). As duas nervuras (x = −12..−8 e 18,6..22,6) ligam as duas paredes e o disco, formando um caixote; ficam fora do corpo do servo (x = −6,1..16,7).
 - **Garra na palma**: eixos das engrenagens ao longo de X do antebraço, em y = ±12 (24 mm entre centros = m·N), z = 62. S4 é aparafusado na face **interna** da palma (x = −10) com o corpo saindo para fora (x até −25,9) e o horn para dentro (x = +2,8); as engrenagens ficam em x = 0,8..4,8, ou seja, ~11 mm abaixo da palma e livres por baixo (a borda inferior das chapas recua até x = 0 na ponta). As mandíbulas ficam 39 mm à frente da ponta das chapas.
+- **Duas opções de garra (ferramenta intercambiável)**: 07/08 = mandíbula plana 10 × 12 (objetos prismáticos, 2 pontos de contato); 10/11 = mandíbula 10 × 17 com entalhe em V de ≈95° (apex 5 mm dentro da face, abertura 11 mm) — 4 pontos de contato, auto-centra cilindros e esferas. Como a garra fecha no plano horizontal, o sulco do V fica **vertical**: pega caneta, pilha e frasco em pé. Mesma engrenagem, mesmo bolso de horn, mesmo pino M3 e mesma distância entre centros → nada muda no antebraço, na palma, no servo ou no firmware (o ângulo de toque das mandíbulas é o mesmo, ≈ 72,5° no servo). Capacidade medida (maior cilindro tocado pelas duas mandíbulas): plana Ø4 a Ø58, V Ø10 a Ø53, conforme S4 vai de 75° a 110°. O corte do V e o prolongamento da mandíbula têm o mesmo volume (100 mm³) — as duas versões pesam igual.
 - **Por que a garra é assim**: pedido do usuário ("captura na horizontal"). A versão anterior tinha as engrenagens no plano do braço (eixo Y) e pegava por cima com o antebraço apontando para baixo.
 - **Ganho da forquilha**: cisalhamento duplo em todas as juntas, esforço lateral no estriado de nylon praticamente eliminado e centro de massa sobre o eixo da base (a garra ficou no plano do braço — sumiu o desalinhamento de 34 mm da versão anterior).
 - **Custo da forquilha**: massa móvel de ≈ 39 g → ≈ 59 g; torque do ombro em vazio de 0,39 → 0,52 kgf·cm; carga útil de ≈ 25 g → ≈ 20 g em extensão máxima. Janelas nas 4 chapas e na palma recuperam parte disso. Não "engrossar" as peças sem refazer o cálculo de torque.
@@ -84,7 +86,7 @@ Armadilha de ambiente: patches via `python - <<'EOF'` (heredoc) no Git Bash às 
 - Se furos ficarem apertados na A1: "X-Y hole compensation" 0,1 mm no Bambu Studio.
 
 ## Verificação (2026-09-24, `python cad/verificacao.py`)
-- STLs: 9 malhas estanques, conferidas **depois de exportadas** (o assert em memória não pega aresta não-manifold).
+- STLs: 11 malhas estanques, conferidas **depois de exportadas** (o assert em memória não pega aresta não-manifold).
 - Colisões: cotovelo × braço → primeiro contato em 160°; antebraço (palma) × plataforma → 148°; dentro de 20..140° do cotovelo e ±75° do ombro, a única interferência é a pose abaixo da mesa (antebraço × disco da base).
 - Engrenagens: interpenetração 0,0000 mm² e folga de flanco 0,190 mm em 361 posições.
 - Firmware: compila sem avisos (`arduino-cli compile --fqbn arduino:avr:uno --warnings all`), 36 % flash / 22 % RAM. arduino-cli em `C:\Program Files\Arduino CLI\`.

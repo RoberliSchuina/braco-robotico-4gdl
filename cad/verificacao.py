@@ -15,6 +15,8 @@ import numpy as np
 import trimesh
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import gerar_pecas as G
+from shapely.geometry import Point, Polygon as SPoly
+from shapely.ops import unary_union
 
 FINO = "--fino" in sys.argv
 DENS = 1.24 * 0.55          # g/cm³ efetivos: PLA a 15 % de infill + 3 paredes
@@ -132,6 +134,49 @@ for k in range(0, 361):
     pior_int = max(pior_int, g1.intersection(g2).area)
     pior_folga = min(pior_folga, g1.distance(g2) if g1.distance(g2) > 0 else 0.0)
 print(f"   interpenetração máxima {pior_int:.4f} mm²   folga de flanco mínima {pior_folga:.3f} mm")
+
+# ---------------------------------------------------------------- 3b. opções de garra
+print("\n== garra: opção A (mandíbula plana) x opção B (mandíbula em V) ==")
+from shapely.geometry import box as sbox
+from shapely.affinity import rotate as rot2d, translate as tr2d
+
+def perfil_dedo(tipo, s=1, com_engrenagem=True):
+    """Silhueta 2D do dedo no plano das engrenagens (mesmas cotas de gerar_pecas.dedo)."""
+    partes = [sbox(-5, 0, 5, 55), sbox(min(0, s * 10), 43 if tipo == "plana" else 38, max(0, s * 10), 55)]
+    if com_engrenagem:
+        partes.append(G.engrenagem_poly(fase_graus=0.0 if s > 0 else 360 / G.GEAR_N / 2))
+    forma = unary_union(partes)
+    if tipo == "v":
+        forma = forma.difference(SPoly([(s * 10.5, 41.0), (s * 10.5, 52.0), (s * 5.0, 46.5)]))
+    return forma
+
+def garra_2d(tipo, alfa, com_engrenagem=True):
+    """Dedos montados com centros a 24 mm; alfa = 0 são dedos paralelos, alfa > 0 abre (S4 = 75 + alfa)."""
+    a = tr2d(rot2d(perfil_dedo(tipo, +1, com_engrenagem), +alfa, origin=(0, 0)), xoff=-G.Y_GARRA)
+    b = tr2d(rot2d(perfil_dedo(tipo, -1, com_engrenagem), -alfa, origin=(0, 0)), xoff=+G.Y_GARRA)
+    return a, b
+
+def objeto_maximo(tipo, alfa):
+    """Maior cilindro em pé (Ø, mm) que as duas mandíbulas tocam ao mesmo tempo."""
+    a, b = garra_2d(tipo, alfa)
+    ym = 49.0 if tipo == "plana" else 46.5          # meio da face útil da mandíbula
+    r = math.radians(alfa)
+    yc = 10 * math.sin(r) + ym * math.cos(r)
+    c = Point(0.0, yc)
+    return 2 * min(c.distance(a), c.distance(b))
+
+for tipo, nome in [("plana", "A — plana"), ("v", "B — em V ")]:
+    print(f"   {nome}  " + " | ".join(f"S4={s:3d}°: Ø{objeto_maximo(tipo, s - 75):5.1f}" for s in (75, 80, 90, 100, 110)))
+for tipo, nome in [("plana", "A"), ("v", "B")]:
+    toque = None
+    for alfa in np.arange(0.0, -10.01, -0.25):
+        a, b = garra_2d(tipo, alfa, com_engrenagem=False)
+        if a.intersects(b) and a.intersection(b).area > 0.02:
+            toque = alfa + 0.25; break
+    print(f"   mandíbulas {nome} se tocam em alfa = {toque:.2f}°  ->  S4 mínimo {75 + toque:.2f}°")
+print("   (S4 = 75° = dedos paralelos, 110° = ANG_MAX. A opção B toca o cilindro em 4 pontos e auto-centra;")
+print("    a opção A toca em 2 pontos, melhor para faces planas.)")
+
 
 # ---------------------------------------------------------------- 4. torque
 print("\n== torque (kgf·cm; stall SG90/MG90S a 5 V = 1,8) ==")
