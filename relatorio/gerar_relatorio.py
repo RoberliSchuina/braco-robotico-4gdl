@@ -107,20 +107,32 @@ P("Requisitos de fabricação: impressora Bambu Lab A1, altura de camada 0,2 mm 
 # ================================================================== 2
 H("2. Visão geral da solução", 1)
 P("O braço é do tipo articulado (antropomórfico) com quatro juntas acionadas por micro-servos SG90/MG90S: "
-  "rotação da base (S1), ombro (S2), cotovelo (S3) e garra (S4). Os elos são chapas de 4 mm impressas em PLA e as "
-  "juntas usam o próprio horn (braço) do servo encaixado em um bolso da peça — solução simples, barata e comum em "
-  "braços didáticos. A garra é de duas engrenagens espelhadas (16 dentes, módulo 1,5): uma acionada pelo servo e a "
-  "outra girando livre em um pino M3, o que produz abertura simétrica dos dedos.", al="j")
+  "rotação da base (S1), ombro (S2), cotovelo (S3) e garra (S4). As juntas usam o próprio horn (braço) do servo "
+  "encaixado em um bolso da peça — solução simples, barata e comum em braços didáticos.", al="j")
+P("Cada elo é uma FORQUILHA: duas chapas de 4 mm, uma de cada lado do plano de rotação da base, ligadas por uma "
+  "travessa aparafusada. O servo da junta fica entre as duas chapas, com o flange na chapa motriz; do lado oposto, um "
+  "munhão Ø9 impresso na própria chapa gira em um mancal Ø9,4. Com isso a carga é dividida entre dois apoios "
+  "(cisalhamento duplo) em vez de pendurar em balanço no eixo do servo, e o centro de massa fica sobre o eixo da base — "
+  "o conjunto é simétrico e equilibrado, sem o esforço lateral que a versão anterior, em chapa única, impunha ao "
+  "estriado de nylon do horn.", al="j")
+P("A garra é de duas engrenagens espelhadas (16 dentes, módulo 1,5): uma acionada pelo servo e a outra girando livre "
+  "em um pino M3, o que produz abertura simétrica dos dedos. Ela é montada sob a PALMA — uma chapa transversal na "
+  "ponta do antebraço, que também é a travessa dessa forquilha —, com os eixos das engrenagens ao longo do eixo X do "
+  "antebraço. Com o antebraço na horizontal esses eixos ficam VERTICAIS e as mandíbulas fecham num plano horizontal: "
+  "o braço se aproxima de lado e agarra pelas laterais um objeto apoiado na mesa (captura na horizontal), em vez de "
+  "descer sobre ele com o antebraço apontando para baixo.", al="j")
 figura(IMG("montagem_isometrica.png"), "Figura 1 — Protótipo montado (modelo 3D gerado a partir das peças).")
 tabela(["Item", "Especificação"], [
     ["Graus de liberdade", "4 (base, ombro, cotovelo, garra)"],
     ["Atuadores", "4 × micro-servo SG90 (plástico) ou MG90S (metálico, recomendado para ombro e cotovelo)"],
     ["Controlador", "Arduino UNO R3 (ATmega328P, 16 MHz)"],
     ["Interface de comando", "2 módulos joystick analógico KY-023 (4 eixos + 2 botões: gravar/reproduzir poses, abrir/fechar garra, home) + terminal serial"],
-    ["Comprimento dos elos", "Braço 70 mm (ombro→cotovelo); antebraço 60 mm (cotovelo→eixo da garra); dedos 55 mm"],
-    ["Alcance horizontal máx.", "≈ 190 mm a partir do eixo da base (ombro a 15°/165°); altura do ombro ≈ 69 mm"],
+    ["Estrutura dos elos", "Forquilha simétrica: 2 chapas de 4 mm por elo (motriz + livre), vão de 37,6 mm no braço e 67,2 mm no antebraço; pivô livre em munhão Ø9 impresso"],
+    ["Comprimento dos elos", "Braço 70 mm (ombro→cotovelo); antebraço 62 mm (cotovelo→eixo da garra); dedos 55 mm"],
+    ["Plano de fechamento da garra", "Horizontal — engrenagens com eixo vertical quando o antebraço está na horizontal; as mandíbulas ficam 2,8 mm abaixo do eixo do antebraço e 39 mm à frente da ponta das chapas"],
+    ["Alcance horizontal máx.", "≈ 186 mm a partir do eixo da base (ombro em 165°, cotovelo quase esticado); altura do ombro 68,8 mm; altura máxima da ponta dos dedos ≈ 249 mm"],
     ["Abertura da garra", "0 mm (mandíbulas encostadas, S4 ≈ 72,5°) a ≈ 57 mm na raiz / 71 mm nas pontas (S4 = 110°)"],
-    ["Carga útil estimada", "≈ 25 g com o braço estendido (185 mm) e ≈ 60 g recolhido, mantendo o ombro em ≤ 50 % do torque de travamento (1,8 kgf·cm a 5 V)"],
+    ["Carga útil estimada", "≈ 20 g com o braço estendido (186 mm) e ≈ 65 g com o braço recolhido (vertical), mantendo o ombro em ≤ 50 % do torque de travamento (1,8 kgf·cm a 5 V); ≈ 30 g aceitando 60 %"],
     ["Alimentação", "Fonte 5 V / 3 A para os servos; Arduino pelo USB OU pela mesma fonte (nunca os dois ao mesmo tempo); GND comum"],
     ["Material / massa impressa", f"PLA, ≈ {sum(p['massa_estimada_g'] for p in info):.0f} g no total ({len(info)} peças, incluindo o controle de mão dos joysticks)"],
 ], [5, 11])
@@ -132,18 +144,21 @@ tabela(["Referência (braço esticado para cima)", "Altura (mm)"], [
     ["Topo da torre da base (apoio do servo S1)", "30,0"],
     ["Eixo do ombro (S2)", "68,8"],
     ["Eixo do cotovelo (S3), braço vertical", "138,8"],
-    ["Eixo da garra (S4), antebraço vertical", "198,8"],
-    ["Ponta dos dedos — altura máxima", "253,8"],
+    ["Eixo da garra (S4), antebraço vertical (referência geométrica)", "200,8"],
+    ["Ponta dos dedos — altura máxima medida no modelo (cotovelo em 20°)", "249,1"],
 ], [10, 4])
 tabela(["Pose", "Ângulos (ombro / cotovelo)", "Altura máx. (mm)", "Alcance horizontal (mm)"], [
-    ["Esticado para cima (altura máxima)", "90° / 160° (limite ANG_MAX)", "≈ 250", "≈ 61"],
-    ["Repouso — home", "90° / 90°", "≈ 170", "≈ 127"],
-    ["Alcance horizontal máximo", "15° ou 165° (limite ANG_MIN/ANG_MAX) / cotovelo esticado", "≈ 146", "≈ 191"],
+    ["Esticado para cima (altura máxima)", "90° / 20° (limite ANG_MIN do cotovelo)", "249", "53"],
+    ["Repouso — home", "90° / 90°", "165", "119"],
+    ["Alcance horizontal máximo", "165° (limite ANG_MAX do ombro) / 20°", "108", "186"],
 ], [5.5, 4, 3, 3.5])
-P("Os alcances incluem o deslocamento lateral do empilhamento das juntas (o eixo da garra fica ≈ 34 mm à frente do plano "
-  "do braço). Com o ombro inclinado mais de ≈ 45° e o antebraço apontando para baixo, a ponta da garra passa do plano da "
-  "mesa (até ≈ 30 mm abaixo): não há batente mecânico, e sim o limite do operador — ou elevar a base ≈ 30 mm com "
-  "espaçadores nos 4 furos de fixação, o que preserva todo o alcance.", al="j")
+P("Valores medidos diretamente no modelo 3D (cad/verificacao.py). Como a estrutura agora é simétrica, o centro da garra "
+  "fica no PLANO do braço — não há mais o deslocamento lateral de ≈ 34 mm da versão em chapa única, e o alcance vale "
+  "igualmente para os dois lados.", al="j")
+P("Limite de operação (não é limite de software): com o ombro além de ≈ 135° e o cotovelo dobrado além de ≈ 140°, o "
+  "antebraço desce abaixo do plano da mesa e chega a tocar o disco da base (interferência medida: 0,1 a 1,5 cm³ nas poses "
+  "extremas; com o ombro em 165° a garra chega a ≈ 28 mm abaixo da mesa). Não há batente mecânico: ou o operador evita a "
+  "combinação, ou se reduz ANG_MAX do ombro para 135° no firmware — o que custa ≈ 50 mm de alcance.", al="j")
 
 # ================================================================== 3
 H("3. Arquitetura do sistema embarcado", 1)
@@ -173,7 +188,7 @@ bom = [
     ["9", "Protoboard 400 pontos", "1", "15", "15", "Montagem do circuito"],
     ["10", "Jumpers macho-macho e macho-fêmea (kit 40 + 40)", "1", "18", "18", "Ligações"],
     ["11", "Parafusos e fixadores — ver lista à parte (Apêndice C / Lista_Parafusos_Fixadores.docx)", "1", f"{custo_total()}", f"{custo_total()}", "PA 2,0×8, PA 1,7×6, M3×25 inox + nylock, M3×12 + porcas/arruelas, M3×16, espaçadores"],
-    ["12", "Filamento PLA 1,75 mm (≈ 105 g usados)", "1", "10", "10", "Custo proporcional do carretel (R$ 90 / kg)"],
+    ["12", "Filamento PLA 1,75 mm (≈ 132 g usados)", "1", "12", "12", "Custo proporcional do carretel (R$ 90 / kg)"],
     ["13", "Abraçadeiras de nylon 2,5 × 100 mm + fita dupla-face", "1", "6", "6", "Cabos nos elos e no suporte dos joysticks / fixação da base"],
     ["14", "Base de MDF ou acrílico 200 × 150 × 6 mm (OBRIGATÓRIA)", "1", "10", "10", "Fixação da base fixa (4 furos Ø3,4): o disco Ø110 solto tomba com ≈ 15 g na garra em extensão máxima"],
     ["15", "Cabo extensor de servo, 3 vias, 300 mm (padrão JR/Futaba)", "2", "4", "8", "S3 (cotovelo) e S4 (garra): o cabo de fábrica (≈ 250 mm) não chega ao circuito passando pelos elos"],
@@ -198,7 +213,7 @@ tabela(["Arquivo STL", "Peça", "Função", "Dimensões (mm)", "Massa est.", "Te
 P(f"Total estimado: ≈ {sum(p['massa_estimada_g'] for p in info):.0f} g de PLA e ≈ {sum(p['tempo_estimado_min'] for p in info)/60:.1f} h de impressão "
   "(0,2 mm, 15 %). As peças cabem na mesa de 256 × 256 mm da A1 em uma ou duas chapas (o Bambu Studio arranja "
   "automaticamente; a base Ø110 e o suporte 160 × 100 não podem ficar lado a lado no mesmo eixo).", al="j")
-figura(IMG("pecas_impressao.png"), "Figura 2 — As sete peças na orientação de impressão (como devem ficar na mesa); na segunda fileira, o suporte dos joysticks.")
+figura(IMG("pecas_impressao.png"), "Figura 2 — As nove peças na orientação de impressão (como devem ficar na mesa): as travessas e a palma são impressas em pé sobre as chapas deitadas.")
 H("5.3 Interfaces com o servo SG90/MG90S (cotas adotadas)", 2)
 tabela(["Elemento", "Cota adotada", "Justificativa"], [
     ["Rasgo do corpo do servo", "23,2 × 12,6 mm (corpo 22,8 × 12,2)", "Folga de 0,2 mm por lado para FDM a 0,2 mm"],
@@ -209,39 +224,57 @@ tabela(["Elemento", "Cota adotada", "Justificativa"], [
     ["Furos-piloto do horn", "Ø1,5 mm", "Micro parafusos autoatarraxantes PA 1,7 × 6 (não vêm no kit do servo)"],
     ["Pino da engrenagem livre", "Ø3,4 mm (chapa) / Ø3,4 mm (engrenagem)", "Parafuso M3 × 25 inox como eixo + porca autotravante"],
     ["Engrenagens da garra", "16 dentes, módulo 1,5, Ø primitivo 24 (= distância entre centros), Ø externo 26,4 (addendum 0,8 m); folga de flanco 0,19 mm", "Dentes trapezoidais com addendum encurtado: sem interferência de topo; a folga (≈ 1,6° de backlash) absorve a imprecisão do FDM"],
+    ["Munhão / mancal (lado livre)", "Munhão Ø9 impresso (8,8 mm no ombro, 14,8 mm no cotovelo) em mancal Ø9,4 passante", "Folga diametral de 0,4 mm — gira livre depois de tirar a rebarba. Não leva parafuso: quem prende axialmente é o parafuso central do horn do lado motriz somado à travessa"],
+    ["Travessa do braço / palma do antebraço", "2 furos passantes Ø3,4 na chapa motriz + furo-piloto Ø2,5 × 8 mm no reforço; parafusos M3 × 10", "Amarram as duas chapas de cada elo (fecham a forquilha). Sem elas as chapas abrem sob esforço lateral e o munhão sai do mancal"],
     ["Espessura das chapas", "4 mm (≈ 20 camadas de 0,2 mm)", "Rigidez adequada com 15 % de preenchimento"],
 ], [4.5, 5.5, 6])
 H("5.4 Análise simplificada de carga", 2)
-P("O servo mais solicitado é o ombro (S2). Diagrama de corpo livre com as massas do modelo (braço 7 g, S3 9 g, "
-  "antebraço 8 g, S4 9 g, dedos 5 g, pino e parafusos 3 g) na pior pose — braço e antebraço na horizontal — dá "
-  "τ_S2 ≈ 0,39 kgf·cm sem carga, e τ_S2 ≈ 0,39 + 0,0185·m [kgf·cm, m em gramas] com uma massa m na ponta (18,5 cm). "
-  "A 5 V, SG90 e MG90S entregam o mesmo torque de travamento, ≈ 1,8 kgf·cm (os 2,2 kgf·cm do MG90S são a 6 V). "
-  "Um servo de hobby não deve sustentar pose acima de ≈ 50 % do travamento: vazio o ombro trabalha a 22 %, com 25 g "
-  "chega a 47 % (limite prático) e com 50 g a 73 % (aquece e perde posição). Com o braço recolhido (cotovelo a 90°) "
-  "o braço de alavanca cai à metade e a carga útil sobe para ≈ 60 g. O cotovelo (S3) fica em 39 % mesmo com 50 g, e a "
-  "garra tem força de sobra (≈ 3,6 N de travamento na mandíbula). O MG90S é indicado nas juntas 2 e 3 não pelo torque, "
-  "mas pelas engrenagens metálicas e pelo rolamento do eixo, que resistem a travamentos e ao esforço lateral. "
-  "Ponto fraco estrutural: todo o conjunto girante (≈ 60 g) pendura no eixo de S1 sem mancal — por isso a base tem "
-  "quatro colunas de encosto a 0,5 mm da plataforma, que limitam o balanço sem travar o giro.", al="j")
+P("O servo mais solicitado é o ombro (S2). O cálculo é um diagrama de corpo livre feito sobre o próprio modelo 3D "
+  "(cad/verificacao.py soma massa × braço de alavanca peça por peça, usando o centro de massa de cada malha e "
+  "13,4 g por MG90S e 9 g por SG90). Na pior pose — braço e antebraço na horizontal, alcance máximo — dá "
+  "τ_S2 = 0,52 kgf·cm sem carga (29 % do travamento) e τ_S2 ≈ 0,52 + 0,018·m [kgf·cm, m em gramas] com uma massa m "
+  "na ponta. A 5 V, SG90 e MG90S entregam o mesmo torque de travamento, ≈ 1,8 kgf·cm (os 2,2 kgf·cm do MG90S são a 6 V).", al="j")
+P("Um servo de hobby não deve sustentar pose acima de ≈ 50 % do travamento: com 25 g o ombro vai a 54 % e com 50 g a "
+  "79 % (aquece e perde posição). Daí a carga útil de ≈ 20 g em extensão máxima — ou ≈ 30 g aceitando 60 % do "
+  "travamento em movimentos curtos. Com o braço recolhido (vertical) o braço de alavanca cai para o antebraço apenas e "
+  "a carga útil sobe para ≈ 65 g. O cotovelo (S3) fica em 39 % mesmo com 50 g e a garra tem força de sobra "
+  "(≈ 3,6 N de travamento na mandíbula).", al="j")
+P("Comparação com a versão anterior, em chapa única: duplicar as chapas levou a massa móvel de ≈ 39 g para ≈ 59 g e o "
+  "torque em vazio de 0,39 para 0,52 kgf·cm, custando ≈ 5 g de carga útil. Em troca, cada junta passou a trabalhar em "
+  "cisalhamento duplo (dois apoios em vez de um balanço), o esforço lateral sobre o estriado de nylon do horn "
+  "praticamente desapareceu e o centro de massa ficou sobre o eixo da base — o que também alivia S1. As janelas nas "
+  "quatro chapas e na palma foram dimensionadas para recuperar parte dessa massa. O MG90S é indicado nas juntas 2 e 3 "
+  "não pelo torque, mas pelas engrenagens metálicas e pelo rolamento do eixo. Ponto fraco remanescente: o conjunto "
+  "girante pendura no eixo de S1 sem mancal — por isso a base tem quatro colunas de encosto a 0,5 mm da plataforma, "
+  "que limitam o balanço sem travar o giro.", al="j")
 
 H("5.5 Suporte dos joysticks (controle de mão)", 2)
-P("Os dois módulos KY-023 são parafusados em uma placa impressa no formato de controle de videogame "
-  "(160 × 100 × 4 mm, arquivo 07_suporte_joysticks.stl), inspirada nos suportes de MDF cortados a laser. Cada módulo "
-  "apoia em quatro ressaltos Ø10 × 3 mm — que afastam as soldas da placa — e é fixado por parafusos M3 × 12 com arruela e porca. "
-  "Os furos são rasgos em cruz de 3,4 × 6 mm, que absorvem até ±1,3 mm de diferença na furação entre fabricantes "
-  "(a placa KY-023 típica mede 34 × 26 mm com furos Ø3 espaçados ≈ 26,5 × 20 mm; confira com paquímetro antes de "
-  "imprimir e ajuste JOY_FUROS no script se necessário). Acima de cada módulo há dois rasgos para abraçadeira de nylon, "
-  "que prendem o chicote de 5 fios, e no topo um rasgo para pendurar o controle. Joystick 1 (esquerda) comanda base e "
-  "ombro; joystick 2 (direita), garra e cotovelo — mesma lógica de um controle de videogame.", al="j")
-figura(IMG("suporte_joysticks.png"), "Figura 3 — Suporte dos joysticks com os dois módulos KY-023 posicionados.", 16)
+P("Os dois módulos KY-023 são montados em uma placa impressa no formato de controle de videogame "
+  "(160 × 100 × 9,2 mm, arquivo 09_suporte_joysticks.stl), inspirada nos suportes de MDF cortados a laser. "
+  "Joystick 1 (esquerda) comanda base e ombro; joystick 2 (direita), garra e cotovelo — mesma lógica de um "
+  "controle de videogame.", al="j")
+P("Fixação — por que não é por furo: a placa do KY-023 mede 34 × 26 mm (valor confirmado nas fichas do fabricante e "
+  "de distribuidores), mas NENHUM datasheet publica a distância entre os furos Ø3, e ela varia de fabricante para "
+  "fabricante; além disso o gimbal do joystick (≈ 22 × 22 mm) encosta nos furos do lado estreito em vários clones. "
+  "Por isso o suporte não depende dessa cota:", al="j")
+B([("Berço de 4 cantos em L: ", "posiciona o módulo pela BORDA da placa (envelope 34,6 × 26,6 mm), com assento de 3 mm "
+    "que afasta as soldas da chapa e lábio de 2,2 mm que trava a placa lateralmente."),
+   ("4 rasgos radiais 3,4 × 11,4 mm: ", "o parafuso M3 corre 8 mm na direção radial, de modo que a mesma peça aceita "
+    "qualquer furação simétrica entre ≈ 21,5 × 15,4 mm e ≈ 34,5 × 24,6 mm (o nominal adotado é 28 × 20 mm). "
+    "Medir a placa com paquímetro só é necessário se ela estiver fora dessa faixa — aí basta alterar JOY_FUROS no script."),
+   ("Parafusos M3 × 12 + arruela ampla Ø9 + porca: ", "2 a 4 por módulo, conforme os furos acessíveis na placa. "
+    "Se o gimbal cobrir dois deles, os cantos do berço já impedem o módulo de sair de posição.")])
+P("Acima de cada módulo há dois rasgos para abraçadeira de nylon, que prendem o chicote de 5 fios (barra de pinos "
+  "voltada para cima), e no topo um rasgo para pendurar o controle.", al="j")
+figura(IMG("suporte_joysticks.png"), "Figura 3 — Suporte dos joysticks: berço de cantos em L e rasgos radiais, com os dois módulos KY-023 posicionados.", 16)
 
 # ================================================================== 6
 H("6. Modelagem no Tinkercad e geração dos STL", 1)
 H("6.1 Importar os STL prontos (um projeto por peça)", 2)
 N(["Acesse https://www.tinkercad.com/dashboard e clique em Criar → Projeto 3D.",
    "Clique em Importar (canto superior direito) → selecione STL/01_base_fixa.stl → unidade: milímetros → escala 100 %.",
-   "Renomeie o projeto (ex.: “Braço 4GDL – 01 Base fixa”). Repita para as outras cinco peças, cada uma em um projeto separado.",
-   "Para o protótipo montado, importe STL/montagem_completa.stl em um sétimo projeto (visualização).",
+   "Renomeie o projeto (ex.: “Braço 4GDL – 01 Base fixa”). Repita para as outras oito peças, cada uma em um projeto separado.",
+   "Para o protótipo montado, importe STL/montagem_completa.stl em um décimo projeto (visualização).",
    "Exportar: Exportar → .STL (o Tinkercad gera um STL individual por projeto). Esses arquivos vão para o Bambu Studio."])
 H("6.2 Receita para modelar cada peça com primitivas do Tinkercad", 2)
 P("Caso se deseje construir as peças do zero no Tinkercad (sólidos = formas; furos = formas marcadas como “Furo”; "
@@ -250,23 +283,26 @@ receitas = [
     ("01 Base fixa", ["Sólidos: Cilindro Ø110 × 4; Caixa 38,6 × 28 × 27 (torre) apoiada em z=3, centro em x=+5,3; 4 Cilindros Ø9 × 36,3 (colunas de encosto) em raio 24,5 (45°, 135°, 225°, 315°), de z=4 a z=40,3.",
                       "Furos: Caixa 28 × 18 × 28 (cavidade, centro x=+5,3, de z=−1 a 27); Caixa 8 × 60 × 2 (canal do cabo, sob a base, x −4..4, y 0..60); "
                       "Caixa 23,2 × 12,6 (rasgo do servo na tampa, centro x=+5,3); 2 Cilindros Ø1,7 em x=−8,45 e x=+19,05; 4 Cilindros Ø3,4 em raio 47 (45°, 135°, 225°, 315°)."]),
-    ("02 Plataforma giratória", ["Sólidos: Cilindro Ø60 × 4; Caixa 34,6 × 4 × 41 (parede, y 4..8, z 3..44, centro x=+5,3); 2 Caixas 4 × 10,5 × 31 (nervuras em x −12..−8 e 18,6..22,6; y −6..4,5).",
-                                 "Furos: bolso em cruz na face inferior (Cilindro Ø9,2 × 2 + 4 braços de 14 mm em tronco de cone Ø9,2→Ø5,4, profundidade 2 — no Tinkercad, use “Cilindro” com raios diferentes ou “Cone” truncado); Cilindro Ø2,6 passante no centro; 8 Cilindros Ø1,5 (±7,5 e ±11 nos dois eixos); "
-                                 "rasgo 23,2 × 12,6 na parede (centro x=+5,3, z=28) + 2 Cilindros Ø1,7 em x=−8,45 e +19,05 (z=28)."]),
-    ("03 Braço", ["Sólidos: Caixa 34 × 4 × 70 + 2 Cilindros Ø34 × 4 (eixo Y) em z=0 e z=70 (chapa no plano XZ).",
-                  "Furos: janela 12 × 22 (z 24..46); bolso duplo na face y=0 (Cilindro Ø9,2 × 2 + 2 braços de 16,5 mm em tronco de cone Ø9,2→Ø5,4); Cilindro Ø2,6 passante em z=0; 4 furos Ø1,5 em z=±8 e ±12; "
-                  "rasgo 12,6 (x) × 23,2 (z) centrado em (0; 64,7) [eixo do servo em z=70]; furos Ø1,7 em z=50,95 e z=78,45."]),
-    ("04 Antebraço", ["Sólidos: Cilindro Ø34 × 4 em z=0; Caixa 34 × 4 × 50; Caixa 48 × 4 × 40 (z 36..76).",
-                      "Furos: janela 12 × 12 (z 21..33 — não começa antes de z=21, para não invadir o bolso do horn); bolso duplo + Ø2,6 + 4 furos Ø1,5 como no braço; rasgo 12,6 × 23,2 centrado em (−12; 54,7); "
-                      "furos Ø1,7 em (−12; 40,95) e (−12; 68,45); Cilindro Ø3,4 em (+12; 60) (pino M3)."]),
-    ("05 Dedo motriz", ["Sólidos: Engrenagem (Geradores de forma → Gear): 16 dentes, módulo 1,5, Ø externo 26,4 (addendum 1,2 mm), altura 4; Caixa 10 × 55 × 4 (haste, y 0..55); Caixa 10 × 12 × 4 (mandíbula, x 0..10, y 43..55).",
+    ("02 Plataforma giratória", ["Sólidos: Cilindro Ø60 × 4; DUAS Caixas 34,6 × 4 × 41 (paredes da forquilha: uma em y 4..8, outra em y −14..−10; z 3..44; centro x=+5,3); 2 Caixas 4 × 14,5 × 27 (nervuras que ligam as duas paredes, em x −12..−8 e 18,6..22,6; y −10..4,5; z 3..30).",
+                                 "Furos: bolso em cruz na face inferior (Cilindro Ø9,2 × 2 + 4 braços de 14 mm em tronco de cone Ø9,2→Ø5,4, profundidade 2); Cilindro Ø2,6 passante no centro; 8 Cilindros Ø1,5 (±7,5 e ±11 nos dois eixos); "
+                                 "rasgo 23,2 × 12,6 na parede motriz (centro x=+5,3, z=28) + 2 Cilindros Ø1,7 em x=−8,45 e +19,05 (z=28); Cilindro Ø9,4 passante na parede livre em (0; z=28) — é o mancal do munhão do braço."]),
+    ("03 Braço — chapa motriz", ["Sólidos: Caixa 34 × 4 × 70 + 2 Cilindros Ø34 × 4 (eixo Y) em z=0 e z=70 (chapa no plano XZ).",
+                  "Furos: janela 16 × 30 (z 22..52); bolso duplo na face interna (Cilindro Ø9,2 × 2 + 2 braços de 16,5 mm em tronco de cone Ø9,2→Ø5,4); Cilindro Ø2,6 passante em z=0; 4 furos Ø1,5 em z=±8 e ±12; "
+                  "rasgo 12,6 (x) × 23,2 (z) centrado em (0; 64,7) [eixo do servo em z=70]; furos Ø1,7 em z=50,95 e z=78,45; 2 furos Ø3,4 em (−13; 59) e (−13; 67) para os parafusos da travessa."]),
+    ("04 Braço — chapa livre", ["Sólidos: mesma silhueta da chapa motriz; Cilindro Ø9 × 9,8 saindo da face interna em z=0 (munhão do ombro); Caixa 4 × 38,6 × 14 (travessa: x −17..−13, y −1..37,6, z 56..70); Caixa 8 × 8 × 14 (reforço dos furos-piloto, x −17..−9, y 29,6..37,6).",
+                  "Furos: janela 16 × 30 (z 22..52); Cilindro Ø9,4 passante em z=70 (mancal do cotovelo); 2 furos-piloto Ø2,5 × 8,4 na face livre do reforço, em (−13; 59) e (−13; 67)."]),
+    ("05 Antebraço — chapa motriz", ["Sólidos: Cilindro Ø34 × 4 em z=0; Caixa 34 × 4 × 40; a partir de z=40 a borda inferior recua em diagonal até x=0 em z=56 e segue reta até a ponta (z=78), para deixar as mandíbulas livres.",
+                      "Furos: janela 16 × 24 (z 20..44); bolso duplo + Ø2,6 + 4 furos Ø1,5 como no braço; 2 furos Ø3,4 em (−10; 54) e (−10; 74) para os parafusos da palma."]),
+    ("06 Antebraço — chapa livre + palma", ["Sólidos: mesma silhueta da chapa motriz; Cilindro Ø9 × 15,8 na face interna em z=0 (munhão do cotovelo); Caixa 4 × 68,2 × 30 (PALMA: x −14..−10, y −1..67,2, z 48..78); 2 Caixas 8 × 8 × 10 (reforços dos furos-piloto na ponta da palma).",
+                      "Furos: janela 16 × 24; na palma, rasgo 23,2 × 12,6 do servo S4 (eixo em y=45,6 medido da face interna, z=62; corpo ao longo de −y) + 2 Cilindros Ø1,7 em y=26,55 e y=54,05; Cilindro Ø3,4 em (y=21,6; z=62) — pino do dedo livre; janela 13 × 22 na palma (y 3..16, z 52..74); 2 furos-piloto Ø2,5 × 8,4 em (−10; 54) e (−10; 74)."]),
+    ("07 Dedo motriz", ["Sólidos: Engrenagem (Geradores de forma → Gear): 16 dentes, módulo 1,5, Ø externo 26,4 (addendum 1,2 mm), altura 4; Caixa 10 × 55 × 4 (haste, y 0..55); Caixa 10 × 12 × 4 (mandíbula, x 0..10, y 43..55).",
                         "Furos: bolso simples na face superior (Cilindro Ø9,2 × 2 + 1 braço de 18 mm em tronco de cone Ø9,2→Ø5,4); Cilindro Ø2,6 passante; 3 furos Ø1,5 em y=8, 12 e 15."]),
-    ("06 Dedo livre", ["Espelho do dedo motriz (mandíbula em x −10..0), sem bolso do horn; engrenagem girada 11,25° (meio dente).",
+    ("08 Dedo livre", ["Espelho do dedo motriz (mandíbula em x −10..0), sem bolso do horn; engrenagem girada 11,25° (meio dente).",
                        "Sólido extra: Cilindro Ø9 × 10,8 sobre a engrenagem (espaçador). Furo: Cilindro Ø3,4 passante."]),
-    ("07 Suporte dos joysticks", ["Sólidos: Caixa 160 × 74 × 4 com cantos R14 (corpo, y −22..52); 2 Cilindros Ø44 × 4 em (±54; −26) (empunhaduras); "
-                                  "8 Cilindros Ø10 × 3 sobre a placa nos furos dos módulos: centros dos módulos em (±45; 14), furos a ±13,25 (x) e ±10 (y) de cada centro.",
-                                  "Furos: em cada furo de módulo, 2 Caixas cruzadas 3,4 × 6 e 6 × 3,4 (rasgo em cruz, passante); 4 Caixas 3 × 8 em (±33..36; 38..46) e (±54..57; 38..46) (abraçadeiras); "
-                                  "rasgo de pendurar 15 × 9 com pontas redondas centrado em (0; 42). Dica: no Tinkercad, use a forma “Cilindro” esticada ou o gerador “Rounded Rectangle” para os cantos."]),
+    ("09 Suporte dos joysticks", ["Sólidos: Caixa 160 × 74 × 4 com cantos R14 (corpo, y −22..52); 2 Cilindros Ø44 × 4 em (±54; −26) (empunhaduras); "
+                                  "por módulo (centros em (±45; 14)), 4 cantos em L alinhados com a borda da placa (envelope 34,6 × 26,6): assento 11 × 8 × 3 mm sob cada canto + 2 paredinhas de 2,5 mm de espessura e 5,2 mm de altura.",
+                                  "Furos: 4 rasgos radiais por módulo (Caixa 3,4 × 8 com pontas redondas, apontando do centro do módulo para o furo nominal em ±14; ±10); 4 Caixas 3 × 8 em (±33..36; 38..46) e (±54..57; 38..46) (abraçadeiras); "
+                                  "rasgo de pendurar 15 × 9 com pontas redondas centrado em (0; 42)."]),
 ]
 for nome, linhas in receitas:
     P(nome, b=True); B(linhas)
@@ -275,22 +311,26 @@ for nome, linhas in receitas:
 H("7. Protótipo montado", 1)
 figura(IMG("montagem_vistas.png"), "Figura 4 — Vistas isométrica, frontal, lateral e superior do protótipo montado (servos em azul).", 16)
 figura(IMG("montagem_repouso.png"), "Figura 5 — Posição de repouso (home): todos os servos em 90°.", 11)
+figura(IMG("montagem_captura.png"), "Figura 6 — Captura na horizontal: com o antebraço na horizontal, os eixos das engrenagens ficam verticais e as mandíbulas fecham no plano horizontal (vista superior à direita).", 16)
 H("7.1 Sequência de montagem", 2)
-N(["Remover rebarbas; testar o encaixe de cada servo nos rasgos (deve entrar justo, sem forçar). Rosquear um parafuso PA 2,0 no furo cego do eixo de cada servo, sem peça, e medir com paquímetro quanto entra: define o comprimento do parafuso central (lista de fixadores, item 1b).",
+N(["Remover rebarbas; testar o encaixe de cada servo nos rasgos (deve entrar justo, sem forçar) e de cada munhão Ø9 no seu mancal Ø9,4 (deve girar livre; se prender, lixar o munhão, nunca o furo). Rosquear um parafuso PA 2,0 no furo cego do eixo de cada servo, sem peça, e medir com paquímetro quanto entra: define o comprimento do parafuso central (lista de fixadores, item 1b).",
    "Base fixa: parafusar o disco na tábua de apoio (4 × M3 × 16 nos furos Ø3,4 — obrigatório, o braço estendido tomba sem isso); encaixar S1 por cima na torre (flange apoiado na tampa) e fixar com 2 parafusos PA 2,0 × 8 (do kit do servo).",
    "Ligar o Arduino, carregar o firmware e enviar 's 0 90', 's 1 90', 's 2 90', 's 3 75' para centralizar os servos antes de montar os horns.",
    "Plataforma: colocar o horn em cruz no bolso inferior (deve assentar no fundo; 4 micro parafusos PA 1,7 × 6), encaixar no eixo de S1 com a plataforma a 0,5 mm das colunas de encosto e fixar com o parafuso central (PA 2,0 × 6 + arruela M2). O estriado do eixo tem ≈ 21 dentes (≈ 17° por dente): escolher a posição mais próxima do alinhamento e corrigir o resto na calibração.",
-   "Fixar S2 na parede da plataforma (corpo atravessa a parede para o lado interno; flange na face externa).",
-   "Braço: horn duplo no bolso (face interna), encaixar no eixo de S2 na vertical, parafuso central.",
-   "Fixar S3 no braço (flange na face externa, corpo para dentro). Antebraço: horn duplo, encaixar a 90° do braço, parafuso central.",
-   "Fixar S4 no antebraço (flange na face externa). Dedo livre: parafuso M3 × 25 pela face interna do antebraço, arruela de nylon, dedo (espaçador contra a chapa), arruela e porca autotravante — apertar só até girar livre.",
-   "Dedo motriz: horn simples no bolso; com S4 em 75° encaixar a engrenagem já engrenada com o dedo livre e os dois dedos paralelos; parafuso central.",
-   "Ligar os extensores de 300 mm em S3 e S4 e passar os cabos ao longo dos elos (abraçadeiras), com uma laçada de folga em cada junta (o ombro e o cotovelo giram até 150°); S2 e S1 alcançam o circuito com o cabo de fábrica.",
-   "Controle de mão: parafusar os módulos KY-023 no suporte impresso (M3 × 12 + arruela ampla + porca, header voltado para cima), prender os dois chicotes de 5 fios nos rasgos com abraçadeiras e ligar à protoboard conforme o esquema."])
+   "Fixar S2 na parede MOTRIZ da plataforma (a de y = 4..8): o corpo atravessa a parede para dentro da forquilha e o flange fica na face externa. Conferir que a extremidade do corpo do servo não encosta na parede livre (folga de projeto: 2,1 mm).",
+   "Braço: montar o horn duplo no bolso da chapa motriz (03). Encaixar primeiro a chapa LIVRE (04) — o munhão entra no mancal da parede livre —, depois a chapa motriz no eixo de S2, na vertical, e apertar o parafuso central. Fechar a forquilha aparafusando a travessa da chapa livre na chapa motriz (2 × M3 × 10, por fora da chapa motriz).",
+   "Fixar S3 na chapa motriz do braço (flange na face externa, corpo para dentro da forquilha).",
+   "Antebraço: montar o horn duplo no bolso da chapa motriz (05). Encaixar a chapa LIVRE (06, a que traz a palma) pelo munhão no mancal da chapa livre do braço; encaixar a chapa motriz no eixo de S3 a 90° do braço e apertar o parafuso central. Fechar a forquilha aparafusando a palma na chapa motriz (2 × M3 × 10).",
+   "Garra: aparafusar S4 na palma pelo lado de baixo (flange contra a face interna da palma, corpo atravessando para cima; 2 × PA 2,0 × 8) ANTES de montar as engrenagens — um dos furos do flange fica sob a engrenagem motriz.",
+   "Dedo livre: parafuso M3 × 25 de cima para baixo pela palma, arruela de nylon, dedo (espaçador Ø9 contra a palma), arruela e porca autotravante — apertar só até girar livre.",
+   "Dedo motriz: horn simples no bolso; com S4 em 75° encaixar a engrenagem já engrenada com o dedo livre e os dois dedos paralelos; parafuso central. Conferir que as duas mandíbulas fecham no plano horizontal quando o antebraço está na horizontal.",
+   "Ligar os extensores de 300 mm em S3 e S4 e passar os cabos ao longo dos elos (abraçadeiras), com uma laçada de folga em cada junta; S2 e S1 alcançam o circuito com o cabo de fábrica.",
+   "Controle de mão: assentar cada módulo KY-023 no berço (a placa encosta nos 4 cantos em L), parafusar com M3 × 12 + arruela ampla + porca nos rasgos radiais que coincidirem com os furos da placa (2 são suficientes se o gimbal cobrir os outros), com a barra de pinos voltada para cima; prender os chicotes nos rasgos com abraçadeiras e ligar à protoboard conforme o esquema."])
+
 
 # ================================================================== 8
 H("8. Projeto eletrônico", 1)
-figura(IMG("esquema_eletrico.png"), "Figura 6 — Esquema elétrico de ligação.", 16.5)
+figura(IMG("esquema_eletrico.png"), "Figura 7 — Esquema elétrico de ligação.", 16.5)
 tabela(["Sinal", "Pino Arduino", "Componente", "Observação"], [
     ["PWM servo base (S1)", "D3", "SG90 — fio laranja", "Servo.h, 600–2400 µs"],
     ["PWM servo ombro (S2)", "D5", "MG90S — fio laranja", ""],
@@ -324,7 +364,7 @@ N(["setup(): inicializa serial, botões e LED; anexa os servos um a um (150 ms e
    "avancaParaAlvo(): para cada junta, move no máximo velMax graus, satura nos limites e escreve nos servos."])
 H("9.3 Testes e calibração", 2)
 N(["Sem as peças montadas, carregar o firmware e usar 's <j> <ang>' para verificar o sentido e a faixa de cada servo.",
-   "Montar e ajustar ANG_MIN/ANG_MAX de cada junta. Cotovelo: descobrir com 's 2 <ang>' em qual sentido o antebraço dobra sobre o braço e parar 5° antes de o corpo de S4 encostar no braço (no modelo: dobra de 165°); o lado 'esticado' pode ir até 5°. Ombro: lembrar que, com o ombro além de ≈ 45° e o antebraço para baixo, a garra alcança o plano da mesa.",
+   "Montar e ajustar ANG_MIN/ANG_MAX de cada junta. O firmware sai com o cotovelo limitado a 40..140° (simétrico, porque o sentido do servo só se conhece agora). Cotovelo: descobrir com 's 2 <ang>' em qual sentido o antebraço dobra sobre o braço; desse lado NÃO passar de 145° (a palma encosta na parede da plataforma a 148°, medido por varredura booleana); do lado 'esticado' pode-se abrir até 20°, ganhando alcance. Ombro: com o ombro além de ≈ 135° e o cotovelo dobrado, o antebraço desce abaixo do plano da mesa e toca o disco da base — evitar a combinação ou reduzir ANG_MAX[1] para 135.",
    "Calibrar a garra: com o horn montado a 75° (dedos paralelos, vão de 4 mm), reduzir o ângulo de 1 em 1 grau ('s 3 74', 's 3 73'...) até as mandíbulas encostarem; anotar esse ângulo em ANG_MIN[3] e usar ≈ 2° acima dele em GARRA_FECHADA (nunca abaixo: o servo fica em travamento). 's 3 110' deve abrir ≈ 57 mm na raiz das mandíbulas.",
    "Verificar o sentido de cada eixo do joystick (inclinar para a direita deve girar a base para a direita etc.); inverter pelo vetor SENTIDO[] se necessário.",
    "Com os joysticks soltos, o braço deve ficar imóvel; se houver deriva, aumentar ZONA_MORTA ou recalibrar com 'j'.",
@@ -339,7 +379,7 @@ tabela(["Parâmetro", "Valor", "Observação"], [
     ["Perfil de processo", "0.20 mm Standard @BBL A1", "Altura de camada 0,20 mm; 1ª camada 0,20 mm"],
     ["Preenchimento", "15 %, padrão Grid ou Gyroid", "Requisito do projeto"],
     ["Paredes / topo / base", "3 perímetros (1,2 mm) / 4 camadas / 3 camadas", "Rigidez das chapas de 4 mm"],
-    ["Suportes", "Desativados", "Maior ponte: 23 mm (teto do rasgo do servo na plataforma); maior balanço: 2,6 mm — dentro do que a A1 faz sem suporte a 0,2 mm"],
+    ["Suportes", "Desativados", "Maior ponte: 23 mm (teto do rasgo do servo na plataforma e na palma); maior balanço: 2,6 mm. As travessas e a palma são impressas EM PÉ sobre a chapa (paredes verticais), e os munhões Ø9 saem na vertical — nenhuma dessas peças precisa de suporte"],
     ["Adesão", "Nenhuma (brim de 3 mm opcional na plataforma)", "Mesa limpa com álcool isopropílico"],
     ["Compensação de furos (X-Y hole compensation)", "0,10 mm se os furos ficarem justos", "Furos Ø1,5–1,9 tendem a encolher em FDM"],
     ["Orientação", "Conforme os STL (face plana para baixo)", "Ver Figura 2 e tabela da seção 5.2"],
@@ -350,7 +390,7 @@ tabela(["Parâmetro", "Valor", "Observação"], [
 H("11. Cronograma sugerido e riscos", 1)
 tabela(["Semana", "Atividade", "Entrega"], [
     ["1", "Compra dos componentes; revisão dos modelos no Tinkercad", "Projetos Tinkercad + STL"],
-    ["2", "Impressão das 7 peças (≈ 9 h) e ajustes de encaixe", "Peças impressas"],
+    ["2", "Impressão das 9 peças (≈ 7 h) e ajustes de encaixe (munhões e bolsos)", "Peças impressas"],
     ["3", "Montagem mecânica + circuito na protoboard", "Protótipo montado"],
     ["4", "Firmware, calibração dos limites e testes de pega", "Vídeo de demonstração + relatório final"],
 ], [2, 9, 5])
@@ -383,10 +423,11 @@ codigo_bloco("""Braço Mecânico/
 ├── CLAUDE.md                         memória de desenvolvimento e revisão (decisões, cotas, pendências)
 ├── cad/
 │   ├── gerar_pecas.py                modelagem paramétrica (gera STL, montagem e imagens)
+│   ├── verificacao.py                varreduras de colisão, engrenagens, envelope e torque
 │   ├── gerar_esquema.py              esquema elétrico
 │   └── pecas_info.json               dimensões/massa/tempo de cada peça
 ├── STL/
-│   ├── 01_base_fixa.stl … 07_suporte_joysticks.stl  uma peça por arquivo (orientação de impressão)
+│   ├── 01_base_fixa.stl … 09_suporte_joysticks.stl  uma peça por arquivo (orientação de impressão)
 │   └── montagem_completa.stl         protótipo montado
 ├── imagens/                          montagem_*.png, pecas_impressao.png, suporte_joysticks.png, esquema_eletrico.png
 ├── firmware/braco_robotico/braco_robotico.ino        código para o Arduino IDE

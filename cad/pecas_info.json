@@ -17,50 +17,80 @@
   {
     "arquivo": "02_plataforma_giratoria.stl",
     "nome": "Plataforma giratória",
-    "funcao": "Fixa no horn de S1; sustenta o servo S2 (ombro)",
+    "funcao": "Fixa no horn de S1; forquilha do ombro (parede motriz de S2 + parede do mancal)",
     "dimensoes_mm": [
       60.0,
       60.0,
       44.0
     ],
-    "volume_solido_cm3": 17.2,
-    "massa_estimada_g": 11.7,
-    "tempo_estimado_min": 35,
-    "triangulos": 5712,
+    "volume_solido_cm3": 22.1,
+    "massa_estimada_g": 15.0,
+    "tempo_estimado_min": 45,
+    "triangulos": 5938,
     "impressao": "Disco para baixo (bolso do horn fica na 1ª camada). Sem suportes."
   },
   {
-    "arquivo": "03_braco.stl",
-    "nome": "Braço (elo superior)",
-    "funcao": "Liga o ombro (S2) ao cotovelo (S3)",
+    "arquivo": "03_braco_motriz.stl",
+    "nome": "Braço — chapa motriz",
+    "funcao": "Lado acionado do elo superior: horn de S2 e servo S3",
     "dimensoes_mm": [
       34.0,
       104.0,
       4.0
     ],
-    "volume_solido_cm3": 10.4,
-    "massa_estimada_g": 7.1,
-    "tempo_estimado_min": 21,
-    "triangulos": 3012,
-    "impressao": "Deitado, bolso do horn para cima. Sem suportes."
+    "volume_solido_cm3": 9.4,
+    "massa_estimada_g": 6.4,
+    "tempo_estimado_min": 19,
+    "triangulos": 3984,
+    "impressao": "Deitada, bolso do horn para cima. Sem suportes."
   },
   {
-    "arquivo": "04_antebraco.stl",
-    "nome": "Antebraço (elo inferior)",
-    "funcao": "Liga o cotovelo (S3) à garra; suporta S4 e o pino da engrenagem livre",
+    "arquivo": "04_braco_livre.stl",
+    "nome": "Braço — chapa livre",
+    "funcao": "Lado livre do elo superior: munhão do ombro, mancal do cotovelo e travessa",
     "dimensoes_mm": [
-      48.0,
-      93.0,
+      34.0,
+      104.0,
+      41.6
+    ],
+    "volume_solido_cm3": 14.0,
+    "massa_estimada_g": 9.5,
+    "tempo_estimado_min": 29,
+    "triangulos": 2256,
+    "impressao": "Deitada, munhão e travessa para cima (tudo vertical na mesa). Sem suportes."
+  },
+  {
+    "arquivo": "05_antebraco_motriz.stl",
+    "nome": "Antebraço — chapa motriz",
+    "funcao": "Lado acionado do elo inferior: horn de S3",
+    "dimensoes_mm": [
+      34.0,
+      95.0,
       4.0
     ],
-    "volume_solido_cm3": 12.1,
-    "massa_estimada_g": 8.2,
-    "tempo_estimado_min": 25,
-    "triangulos": 3118,
-    "impressao": "Deitado, bolso do horn para cima. Sem suportes."
+    "volume_solido_cm3": 8.2,
+    "massa_estimada_g": 5.6,
+    "tempo_estimado_min": 17,
+    "triangulos": 3166,
+    "impressao": "Deitada, bolso do horn para cima. Sem suportes."
   },
   {
-    "arquivo": "05_garra_dedo_motriz.stl",
+    "arquivo": "06_antebraco_livre.stl",
+    "nome": "Antebraço — chapa livre + palma",
+    "funcao": "Lado livre do elo inferior e base da garra (servo S4 e pino do dedo livre)",
+    "dimensoes_mm": [
+      34.0,
+      96.0,
+      71.2
+    ],
+    "volume_solido_cm3": 16.1,
+    "massa_estimada_g": 11.0,
+    "tempo_estimado_min": 33,
+    "triangulos": 2408,
+    "impressao": "Deitada, palma em pé (67 mm). Teto do rasgo de S4 faz ponte de 23 mm. Sem suportes."
+  },
+  {
+    "arquivo": "07_garra_dedo_motriz.stl",
     "nome": "Dedo motriz da garra",
     "funcao": "Engrenagem acionada pelo horn de S4 + dedo",
     "dimensoes_mm": [
@@ -75,7 +105,7 @@
     "impressao": "Deitado, bolso do horn para cima. Sem suportes."
   },
   {
-    "arquivo": "06_garra_dedo_livre.stl",
+    "arquivo": "08_garra_dedo_livre.stl",
     "nome": "Dedo livre da garra",
     "funcao": "Engrenagem espelhada que gira no pino M3 + dedo",
     "dimensoes_mm": [
@@ -90,18 +120,18 @@
     "impressao": "Deitado, ressalto para cima. Sem suportes."
   },
   {
-    "arquivo": "07_suporte_joysticks.stl",
+    "arquivo": "09_suporte_joysticks.stl",
     "nome": "Suporte dos joysticks",
-    "funcao": "Controle de mão: fixa os 2 módulos KY-023 (parafusos M3)",
+    "funcao": "Controle de mão: berço dos 2 módulos KY-023 (4 rasgos M3 cada)",
     "dimensoes_mm": [
       160.0,
       100.0,
-      7.0
+      9.2
     ],
-    "volume_solido_cm3": 53.6,
-    "massa_estimada_g": 36.6,
-    "tempo_estimado_min": 110,
-    "triangulos": 4248,
-    "impressao": "Deitado, ressaltos para cima. Sem suportes."
+    "volume_solido_cm3": 56.0,
+    "massa_estimada_g": 38.2,
+    "tempo_estimado_min": 115,
+    "triangulos": 4014,
+    "impressao": "Deitado, berços para cima. Sem suportes."
   }
 ]

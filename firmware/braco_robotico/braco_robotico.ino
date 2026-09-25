@@ -26,6 +26,8 @@
  *    SW1 curto = grava a pose atual      SW1 longo (> 0,8 s) = inicia/para a reprodução
  *    SW2 curto = abre/fecha a garra      SW2 longo (> 0,8 s) = vai para a posição de repouso (home)
  *    (garra: 74° ≈ fechada, 110° = aberta — valores nominais, calibrar; os dedos se tocam em ~72,5°)
+ *    A garra é montada sob a palma, com as engrenagens de eixo vertical: com o antebraço na horizontal as
+ *    mandíbulas fecham num PLANO HORIZONTAL (o braço agarra o objeto pelos lados, apoiado na mesa).
  *  COMANDOS SERIAIS (115200 bps) — calibração e depuração:
  *    p  imprime posições      g  grava pose        l  limpa poses       r  reproduz/para
  *    m  manual (para)         h  home              a  abre/fecha garra  j  recalibra centro dos joysticks
@@ -52,13 +54,15 @@ const float    VEL_JOY        = 2.0f;   // graus por passo com o joystick no fim
 //   base     : 5..175 — nunca 0/180 (extremos da faixa de pulso = batente interno do servo, zumbido e aquecimento)
 //   ombro    : 15..165 — com o ombro > ~45° e o antebraço apontando para baixo a garra passa do plano da mesa:
 //              não há batente mecânico, o operador (ou a base elevada) evita
-//   cotovelo : 20..160 — o corpo de S4 encosta no braço quando o antebraço dobra >= 165° sobre ele; como o
-//              sentido do servo só se conhece na calibração, o limite é simétrico (o lado "esticado" pode ir a 5°)
+//   cotovelo : 40..140 — dobrando o antebraço sobre o braço, a PALMA da garra encosta na parede da plataforma
+//              a partir de 148° (varredura booleana; no braço em si só toca a 160°). Como o sentido do servo só
+//              se conhece na calibração, o limite é simétrico: depois de calibrar, o lado "esticado" pode ir a
+//              20° e o lado "dobrado" NUNCA deve passar de 145°
 //   garra    : 72..110 — as mandíbulas se tocam em ~72,5° (horn montado a 75° = dedos paralelos); abaixo disso
 //              o servo fica em travamento (stall) permanente
 //                                   base   ombro  cotovelo garra
-const uint8_t ANG_MIN[N_JUNTAS]  = {   5,    15,    20,    72 };
-const uint8_t ANG_MAX[N_JUNTAS]  = { 175,   165,   160,   110 };
+const uint8_t ANG_MIN[N_JUNTAS]  = {   5,    15,    40,    72 };
+const uint8_t ANG_MAX[N_JUNTAS]  = { 175,   165,   140,   110 };
 const uint8_t ANG_HOME[N_JUNTAS] = {  90,    90,    90,    90 };
 const uint8_t PIN_SERVO[N_JUNTAS] = { 3, 5, 6, 9 };
 const uint8_t PIN_EIXO[N_JUNTAS]  = { A0, A1, A3, A2 };   // J1-VRx, J1-VRy, J2-VRy, J2-VRx
