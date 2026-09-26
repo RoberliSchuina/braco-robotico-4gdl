@@ -12,7 +12,7 @@
  *    D9  -> sinal servo S4 (garra)         JOYSTICK 2:  VRx -> A2 (garra)
  *    D13 -> LED de status (LED da placa)                VRy -> A3 (cotovelo)
  *                                                       SW  -> D4 (abrir/fechar garra; longo = home)
- *    Joysticks: +5V e GND do Arduino. Servos: fonte externa 5 V / 3 A (GND comum!)
+ *    Joysticks: +5V e GND do Arduino. Servos: fonte externa 5 V / 5 A (GND comum!)
  * ----------------------------------------------------------------------------
  *  CONTROLE
  *    O joystick volta sozinho ao centro, por isso o comando é INCREMENTAL (velocidade):

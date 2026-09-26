@@ -134,7 +134,7 @@ tabela(["Item", "Especificação"], [
     ["Opções de garra", "Duas ferramentas intercambiáveis: A (mandíbula plana, objetos prismáticos) e B (mandíbula em V, auto-centrante para cilindros e esferas em pé) — ver seção 5.6"],
     ["Abertura da garra", "0 mm (mandíbulas encostadas, S4 ≈ 72,5°) a ≈ 57 mm na raiz / 71 mm nas pontas (S4 = 110°)"],
     ["Carga útil estimada", "≈ 20 g com o braço estendido (186 mm) e ≈ 65 g com o braço recolhido (vertical), mantendo o ombro em ≤ 50 % do torque de travamento (1,8 kgf·cm a 5 V); ≈ 30 g aceitando 60 %"],
-    ["Alimentação", "Fonte 5 V / 3 A para os servos; Arduino pelo USB OU pela mesma fonte (nunca os dois ao mesmo tempo); GND comum"],
+    ["Alimentação", "Fonte chaveada 5 V / 5 A para os servos (mínimo aceitável 3 A — ver seção 8.1); Arduino pelo USB OU pela mesma fonte (nunca os dois ao mesmo tempo); GND comum"],
     ["Material / massa impressa", f"PLA, ≈ {sum(p['massa_estimada_g'] for p in info):.0f} g no total ({len(info)} peças, incluindo o controle de mão dos joysticks)"],
 ], [5, 11])
 H("2.1 Envelope de trabalho", 2)
@@ -183,9 +183,9 @@ bom = [
     ["3", "Micro-servo SG90 (180°) com kit de horns e parafusos", "2", "15", "30", "Base (S1) e garra (S4)"],
     ["4", "Módulo joystick analógico KY-023 (2 eixos + botão)", "2", "9", "18", "Comando manual das 4 juntas (J1: base/ombro; J2: garra/cotovelo)"],
     ["5", "Cabo jumper fêmea-macho 20 cm (5 vias por joystick)", "10", "0,4", "4", "Ligação dos joysticks à protoboard"],
-    ["6", "Fonte chaveada 5 V / 3 A com plug P4", "1", "35", "35", "Alimentação dos servos"],
+    ["6", "Fonte chaveada 5 V / 5 A com plug P4 (2,1 mm, centro positivo)", "1", "50", "50", "Alimentação dos servos. Dimensionamento na seção 8.1: 1,85 A no pior caso de operação e 2,70 A com os 4 servos travados. Uma fonte de 3 A atende a operação normal, mas fica a 90 % do nominal em travamento"],
     ["7", "Jack P4 fêmea com borne (adaptador)", "1", "6", "6", "Conexão da fonte na protoboard"],
-    ["8", "Capacitor eletrolítico 1000 µF / 16 V", "1", "2", "2", "Desacoplamento do barramento dos servos"],
+    ["8", "Capacitor eletrolítico 1000 µF / 16 V (+ 4 cerâmicos 100 nF)", "1", "4", "4", "Desacoplamento do barramento dos servos: o eletrolítico cobre o degrau de corrente até a fonte reagir (~100 µs); os cerâmicos, junto a cada conector, cortam o ruído de comutação do motor"],
     ["9", "Protoboard 400 pontos", "1", "15", "15", "Montagem do circuito"],
     ["10", "Jumpers macho-macho e macho-fêmea (kit 40 + 40)", "1", "18", "18", "Ligações"],
     ["11", "Parafusos e fixadores — ver lista à parte (Apêndice C / Lista_Parafusos_Fixadores.docx)", "1", f"{custo_total()}", f"{custo_total()}", "PA 2,0×8, PA 1,7×6, M3×25 inox + nylock, M3×12 + porcas/arruelas, M3×16, espaçadores"],
@@ -371,12 +371,63 @@ tabela(["Sinal", "Pino Arduino", "Componente", "Observação"], [
     ["Joystick 2 — VRx / VRy", "A2 / A3", "KY-023 (garra / cotovelo)", "+5 V e GND do Arduino"],
     ["Joystick 2 — SW", "D4", "Botão do joystick (para GND)", "INPUT_PULLUP; curto = abre/fecha garra, longo = home"],
     ["LED de status", "D13", "LED da placa", "Aceso = manual; piscando = reproduzindo"],
-    ["+5 V servos", "—", "Fonte 5 V / 3 A + C1 1000 µF", "NUNCA pelo 5 V do Arduino"],
+    ["+5 V servos", "—", "Fonte 5 V / 5 A + C1 1000 µF", "NUNCA pelo 5 V do Arduino"],
     ["GND", "GND", "Comum a fonte, servos, pots e Arduino", "Obrigatório"],
 ], [3.8, 2.6, 4.6, 5])
-P("Consumo: cada micro-servo pode drenar picos de 0,6–0,8 A ao partir ou sob carga; quatro servos exigem fonte de ao "
-  "menos 2,5 A. O capacitor C1 próximo ao barramento reduz quedas de tensão que provocam reset do Arduino e "
-  "tremores (jitter) nos servos.", al="j")
+
+H("8.1 Dimensionamento da fonte de alimentação", 2)
+P("O datasheet do MG90S (TowerPro) publica apenas massa, dimensões, torque de travamento "
+  "(1,8 kgf·cm a 4,8 V e 2,2 kgf·cm a 6 V), velocidade (0,1 s/60° a 4,8 V), faixa de tensão "
+  "(4,8–6,0 V) e banda morta (5 µs) — não há nenhuma especificação de corrente. O dimensionamento "
+  "foi feito, portanto, a partir de medições publicadas por fornecedores (a 5 V: 10 mA em repouso, "
+  "120–250 mA girando em vazio e 700 mA com o rotor travado) combinadas com o modelo de motor CC "
+  "de escovas, no qual a corrente cresce linearmente com o torque exigido:", al="j")
+P("I(T) = I₀ + (I_travado − I₀) · (T / T_travado)", i=True, al="c")
+P("Aplicando as frações de torque calculadas na seção 5.4 (corpo livre com as massas reais das "
+  "malhas), chega-se ao consumo por junta e aos cenários de operação abaixo. O script "
+  "cad/verificacao_eletrica.py reproduz a tabela.", al="j")
+tabela(["Junta (servo)", "Torque exigido", "Corrente movendo", "Com 25 g na garra"], [
+    ["S1 base (SG90)", "≈ 5 % do travamento (eixo vertical)", "272 mA", "286 mA"],
+    ["S2 ombro (MG90S)", "29 % em vazio / 54 % com 25 g", "380 mA", "493 mA"],
+    ["S3 cotovelo (MG90S)", "18 % em vazio / 28 % com 25 g", "331 mA", "376 mA"],
+    ["S4 garra (SG90)", "travamento parcial ao apertar o objeto", "295 mA", "520 mA"],
+], [4.5, 5.5, 3, 3])
+tabela(["Cenário", "Corrente total", "% de uma fonte de 3 A"], [
+    ["Repouso — 4 servos parados sustentando o braço", "0,47 A", "16 %"],
+    ["Manual (joystick) — 1 eixo movendo, 3 sustentando", "0,72 A", "24 %"],
+    ["Manual com objeto de 25 g, garra apertando", "1,21 A", "40 %"],
+    ["Reprodução — 4 eixos simultâneos, sem carga", "1,28 A", "43 %"],
+    ["Reprodução — 4 eixos simultâneos + 25 g", "1,68 A", "56 %"],
+    ["Reprodução — 4 eixos simultâneos + 50 g (carga útil máx.)", "1,85 A", "62 %"],
+    ["Falha — os 4 servos travados ao mesmo tempo", "2,70 A", "90 %"],
+    ["Pico de milissegundos — 1 servo invertendo o sentido", "≈ 2,6 A", "—"],
+], [8, 3, 4])
+P("Em operação normal o pior caso é 1,85 A. O consumo só se aproxima de 3 A na condição de falha "
+  "em que os quatro servos travam simultaneamente (braço preso, garra fechando sobre um objeto "
+  "rígido além do limite) — situação em que uma fonte de 3 A trabalharia a 90 % do valor nominal, "
+  "sem margem para a queda de tensão típica dessas placas sob carga plena. Por isso especificou-se "
+  "5 V / 5 A: mantém 85 % de margem mesmo nessa falha, sem custo relevante. Uma fonte de 3 A de boa "
+  "procedência atende ao projeto; uma de 2 A, não.", al="j")
+P("Capacitor e capacidade de corrente resolvem problemas diferentes. Quando um servo inverte o "
+  "sentido em plena velocidade, a força contra-eletromotriz soma-se à tensão aplicada e a corrente "
+  "chega a cerca de 1,4 A por alguns milissegundos; nenhuma fonte chaveada responde em microssegundos, "
+  "e é o capacitor que entrega esse degrau localmente. Mas a energia armazenada é pequena: C1 = 1000 µF, "
+  "admitindo 0,2 V de queda, guarda 0,2 mC — suficiente para sustentar um déficit de 2 A por apenas "
+  "100 µs. Para cobrir um travamento de 1 s seriam necessários cerca de 2 F (2 000 000 µF). "
+  "O capacitor elimina, portanto, a queda rápida de tensão (que provoca reset do Arduino, quando "
+  "alimentado pela mesma fonte, e tremor nos servos), mas não substitui a capacidade de corrente "
+  "da fonte, e o inverso também é verdadeiro: uma fonte de 10 A sem capacitor continuaria a afundar "
+  "no transitório por causa da indutância dos cabos.", al="j")
+P("Requisitos da fonte: 5 V ± 5 % chaveada, ≥ 4 A (5 A recomendado), regulação de carga melhor "
+  "que 5 %, ondulação < 100 mV pico a pico e proteção contra sobrecorrente. Não elevar para 6 V "
+  "em busca dos 2,2 kgf·cm: a corrente de travamento subiria para ≈ 0,85 A por servo (3,4 A no "
+  "conjunto) e toda a análise de torque da seção 5.4 foi feita para 1,8 kgf·cm a 5 V.", al="j")
+P("Fiação: o orçamento de queda de tensão é de apenas 200 mV (5,0 V da fonte contra os 4,8 V "
+  "mínimos do datasheet). Meio metro de jumper 22 AWG conduzindo 2 A já consome 106 mV (ida e "
+  "volta); recomenda-se 20 AWG ou mais grosso no trecho fonte → protoboard. O elo mais frágil é o "
+  "contato da protoboard: cada ponto suporta cerca de 1 A, de modo que a entrada da fonte deve ser "
+  "feita por dois furos em paralelo (ou por um borne parafusado) e os quatro servos devem ser "
+  "distribuídos ao longo da trilha, nunca no mesmo furo.", al="j")
 
 # ================================================================== 9
 H("9. Firmware (Arduino IDE)", 1)
@@ -399,7 +450,8 @@ N(["Sem as peças montadas, carregar o firmware e usar 's <j> <ang>' para verifi
    "Verificar o sentido de cada eixo do joystick (inclinar para a direita deve girar a base para a direita etc.); inverter pelo vetor SENTIDO[] se necessário.",
    "Com os joysticks soltos, o braço deve ficar imóvel; se houver deriva, aumentar ZONA_MORTA ou recalibrar com 'j'.",
    "Validar o modo manual (suavidade, ausência de tremor) e o ciclo gravar → reproduzir com 4–6 poses (ex.: pegar e soltar um objeto de 20 g usando SW2 para a garra).",
-   "Medir a corrente da fonte durante o movimento; se o Arduino reiniciar, verificar o GND comum e o capacitor C1."])
+   "Medir a corrente da fonte durante o movimento (multímetro em série na linha +5 V dos servos): esperam-se ≈ 0,5 A em repouso e 1,2–1,9 A com os quatro eixos em movimento sob carga (seção 8.1). Leitura muito acima disso indica servo travado contra um batente; se o Arduino reiniciar, verificar o GND comum e o capacitor C1.",
+   "Medir a tensão no barramento dos servos com o braço em esforço: não deve cair abaixo de 4,8 V. Se cair, a fonte está subdimensionada ou os fios de alimentação são finos demais."])
 
 # ================================================================== 10
 H("10. Parâmetros de impressão — Bambu Lab A1", 1)

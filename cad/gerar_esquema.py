@@ -37,7 +37,7 @@ fio([(75, Y_VEXT), (146, Y_VEXT)], VERM, 3); ax.text(76, Y_VEXT + 1.5, "+5 V ser
 fio([(1, Y_GND), (150, Y_GND)], PRETO, 3);   ax.text(152, Y_GND, "GND comum", va='center', fontsize=9)
 
 # fonte externa
-caixa(112, 86, 34, 12, "FONTE 5 V / 3 A (plug P4)", "#fde9d9", 10)
+caixa(112, 86, 34, 12, "FONTE 5 V / 5 A (plug P4)", "#fde9d9", 10)
 ax.text(116, 88, "V+", ha='center', fontsize=8, color=VERM); ax.text(142, 88, "GND", ha='center', fontsize=8)
 fio([(116, 86), (116, Y_VEXT)], VERM); ponto(116, Y_VEXT, VERM)
 fio([(142, 86), (142, 84.5), (149, 84.5), (149, Y_GND)], PRETO); ponto(149, Y_GND)
@@ -79,7 +79,8 @@ for nome, y0, terms, y5, yg, desc in joys:
 
 # ---------------- notas
 ax.text(2, 8, "Notas: (1) o GND da fonte externa DEVE ser ligado ao GND do Arduino (barramento comum);  (2) nunca alimente os servos pelo 5 V do Arduino/USB;\n"
-              "(3) C1 próximo aos servos reduz quedas de tensão nos picos de corrente;  (4) cabos dos servos: laranja = sinal, vermelho = VCC, marrom = GND;\n"
+              "(3) C1 cobre o degrau de corrente da inversão de sentido (µs a ms) até a fonte reagir — não substitui a corrente da fonte (ver 8.1 do relatório);\n"
+              "      pior caso de operação 1,85 A, com os 4 servos travados 2,70 A;  (4) cabos dos servos: laranja = sinal, vermelho = VCC, marrom = GND;\n"
               "(5) os joysticks (≈ 2 mA cada) são alimentados pelo 5 V do Arduino; o botão SW vai a GND quando pressionado (usar INPUT_PULLUP);\n"
               "(6) alimente o Arduino de UMA forma só: pelo USB (programação/depuração) OU por um jumper da fonte ao pino 5V — nunca os dois ao mesmo tempo\n"
               "     (a fonte ficaria em paralelo com o USB do computador);  (7) só há conexão elétrica onde há ponto (•); fios que apenas se cruzam não se conectam.",

@@ -13,6 +13,7 @@ Entregas: BOM, peças 3D (Tinkercad, uma por arquivo) + STL, protótipo montado,
 - [x] Firmware `firmware/braco_robotico/braco_robotico.ino` (4 servos, 2 joysticks KY-023, gravar/reproduzir, serial, EEPROM)
 - [x] 2026-09-19: potenciômetros + botão avulso substituídos por 2 joysticks KY-023
 - [x] Esquema elétrico `imagens/esquema_eletrico.png` (eletrônica NÃO mudou na revisão de 2026-09-24)
+- [x] 2026-09-26: **dimensionamento da fonte** — `cad/verificacao_eletrica.py` + seção 8.1 do relatório; fonte passou a 5 V / 5 A (ver "Elétrica")
 - [x] 2026-09-21: repositório GitHub `RoberliSchuina/braco-robotico-4gdl` — público desde 2026-09-22 (remote `origin`, branch `main`); `gh` instalado em `C:\Program Files\GitHub CLI\` e autenticado
 - [x] 2026-09-20: guia de ligações furo a furo `Circuito_Braco_Robotico.html` (SVG da protoboard + esquema PNG em base64 — regerar o PNG exige reembutir)
 - [x] Relatório `relatorio/Relatorio_Braco_Robotico.docx` (gerado por `relatorio/gerar_relatorio.py`)
@@ -30,6 +31,7 @@ Toda alteração em arquivos deste diretório (fonte ou regenerados) deve termin
 pip install trimesh manifold3d shapely numpy matplotlib python-docx
 python cad/gerar_pecas.py        # ~3 min (renders são a parte lenta) -> STL/, imagens/, cad/pecas_info.json
 python cad/verificacao.py        # ~4 min: colisões, engrenagens, envelope, torque
+python cad/verificacao_eletrica.py   # ~1 s: consumo, fonte, capacitor, queda nos cabos
 python cad/gerar_esquema.py      # -> imagens/esquema_eletrico.png
 python relatorio/gerar_relatorio.py
 python relatorio/gerar_lista_parafusos.py
@@ -79,6 +81,14 @@ Armadilha de ambiente: patches via `python - <<'EOF'` (heredoc) no Git Bash às 
 - Estabilidade: disco Ø110 solto tomba com pouca carga na garra → tábua de fixação OBRIGATÓRIA (BOM 14, lista item 9).
 - Cabos: os 250 mm de fábrica não chegam de S3/S4 ao circuito → 2 extensores de 300 mm (BOM 15).
 - Nunca alimentar o Arduino por USB e pela fonte no pino 5V ao mesmo tempo (nota 6 do esquema).
+
+## Elétrica — dimensionamento da fonte (2026-09-26, `cad/verificacao_eletrica.py`)
+- **O datasheet TowerPro do MG90S não publica corrente nenhuma** (só 13,4 g, 22,5×12×35,5, 1,8/2,2 kgf·cm, 0,1 s/60°, 4,8–6,0 V, banda morta 5 µs). Os valores usados são de medição de terceiros a 5 V: 10 mA parado, 120–250 mA em vazio, **700 mA travado (MG90S) / 650 mA (SG90)**. Não citar "corrente de datasheet" no relatório.
+- Modelo: `I(T) = I0 + (I_stall − I0)·(T/T_stall)`, alimentado pelas frações de torque de `verificacao.py`. Resultados: repouso 0,47 A; manual 0,72–1,21 A; reprodução 4 eixos + 50 g **1,85 A (pior caso normal)**; **falha com os 4 travados 2,70 A**; pico de inversão de sentido ≈ 1,4 A por servo (fcem soma à tensão aplicada), ≈ 2,6 A no barramento.
+- **Veredito: 3 A funciona** (62 % em operação, 90 % no travamento). Fonte especificada mudou para **5 V / 5 A** só por margem — decisão reversível, é trocar BOM 6 e os rótulos. Não subir para 6 V: stall vira ≈ 0,85 A/servo (3,4 A) e toda a análise de torque é para 1,8 kgf·cm a 5 V.
+- **Capacitor não substitui corrente de fonte** (e vice-versa). C1 = 1000 µF com 0,2 V de queda guarda 0,2 mC = 2 A por 100 µs — cobre o degrau de µs/ms até a malha da fonte reagir. Cobrir 1 s de travamento exigiria ≈ 2 F. Acrescentado 100 nF cerâmico em cada servo (BOM 8).
+- Orçamento de queda: 5,0 → 4,8 V = **200 mV**. 0,5 m de 22 AWG com 2 A já gasta 106 mV → usar 20 AWG ou mais grosso no trecho fonte → protoboard. Contato de protoboard aguenta ~1 A: alimentar a trilha por dois furos (ou borne parafusado) e espalhar os servos.
+- Se o Arduino for alimentado pelo USB, afundar o barramento dos servos **não** reseta o MCU — só perde torque e dá jitter. O risco de reset só existe com o jumper da fonte no pino 5V.
 - Firmware compila em 36 % flash / 22 % RAM sem avisos; Servo usa Timer1.
 
 ## Pendências / ideias de revisão
