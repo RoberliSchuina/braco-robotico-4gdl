@@ -422,6 +422,40 @@ P("Requisitos da fonte: 5 V ± 5 % chaveada, ≥ 4 A (5 A recomendado), regulaç
   "que 5 %, ondulação < 100 mV pico a pico e proteção contra sobrecorrente. Não elevar para 6 V "
   "em busca dos 2,2 kgf·cm: a corrente de travamento subiria para ≈ 0,85 A por servo (3,4 A no "
   "conjunto) e toda a análise de torque da seção 5.4 foi feita para 1,8 kgf·cm a 5 V.", al="j")
+H("8.2 Modelo para simulação (EveryCircuit)", 2)
+P("Simuladores analógicos como o EveryCircuit não possuem microcontrolador, servo nem módulo "
+  "joystick em sua biblioteca — apenas fontes, resistores, reativos, chaves, amplificadores "
+  "operacionais, diodos, transistores, portas lógicas, latches, CIs e medidores. O esquema da "
+  "Figura 8, portanto, não pode ser digitado nesse tipo de ferramenta. O que se simula é o "
+  "subsistema de potência, que é justamente onde estão as tensões e correntes de interesse: "
+  "cada servo é substituído por uma chave em série com um resistor de valor R = 5 V / I, com I "
+  "retirado da tabela da seção 8.1.", al="j")
+figura(IMG("esquema_everycircuit.png"),
+       "Figura 9 — Modelo equivalente do barramento de 5 V para simulação. O modelo A usa quatro "
+       "componentes e cabe no limite gratuito do EveryCircuit; o modelo B detalha os quatro servos.", 16.5)
+tabela(["Elemento", "Valor", "O que representa"], [
+    ["V1 — fonte de tensão CC", "5 V", "Fonte chaveada ideal"],
+    ["Rs — resistor", "0,05 Ω (fonte de 5 A) ou 0,083 Ω (3 A)", "Regulação de carga da fonte (5 % na corrente nominal)"],
+    ["Lf — indutor", "1 µH", "Indutância do par de fios da fonte"],
+    ["Rf — resistor", "0,08 Ω", "0,5 m de 22 AWG (ida e volta) + um contato de protoboard"],
+    ["C1 — capacitor", "1000 µF", "Capacitor de desacoplamento do projeto"],
+    ["ESR — resistor", "0,15 Ω", "Resistência série equivalente do eletrolítico"],
+    ["S1–S4 — chaves", "—", "Ligam e desligam cada servo"],
+    ["Resistores de carga", "7,7 / 7,1 / 7,1 / 7,7 Ω", "Servos travados (base, ombro, cotovelo, garra)"],
+    ["Resistores de carga (alt.)", "18,4 / 13,2 / 15,1 / 16,9 Ω", "Mesmos servos em movimento"],
+], [5.5, 5, 6])
+P("Resultados esperados em regime permanente, com os quatro servos ligados: 1,24 A e 4,84 V no "
+  "barramento com os servos em movimento; 2,53 A e 4,66 V com os quatro travados. Trocando Rs "
+  "para 0,083 Ω (fonte de 3 A), os mesmos casos dão 4,80 V e 4,59 V — o segundo já bem abaixo "
+  "do mínimo de 4,8 V do datasheet, o que confirma a escolha da fonte de 5 A feita na seção 8.1.", al="j")
+P("No transitório, aplicando um degrau de 'em movimento' para 'travado', a tensão mínima do "
+  "barramento é 4,64 V com C1 e apenas 2,29 V sem ele — neste modelo, que ignora de propósito a "
+  "capacitância de saída da própria fonte para isolar o efeito de C1. A queda instantânea é "
+  "dominada pela ESR e não pela capacitância, razão pela qual dois eletrolíticos de 470 µF em "
+  "paralelo (ESR pela metade) seguram o transitório melhor do que um único de 1000 µF. "
+  "O script cad/gerar_esquema_everycircuit.py gera a Figura 9 e recalcula todos esses valores.", al="j")
+
+H("8.3 Fiação", 2)
 P("Fiação: o orçamento de queda de tensão é de apenas 200 mV (5,0 V da fonte contra os 4,8 V "
   "mínimos do datasheet). Meio metro de jumper 22 AWG conduzindo 2 A já consome 106 mV (ida e "
   "volta); recomenda-se 20 AWG ou mais grosso no trecho fonte → protoboard. O elo mais frágil é o "
