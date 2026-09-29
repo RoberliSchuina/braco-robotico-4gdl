@@ -1,0 +1,215 @@
+{
+ "limites": {
+  "ANG_MIN": [
+   5,
+   15,
+   40,
+   72
+  ],
+  "ANG_MAX": [
+   175,
+   165,
+   140,
+   110
+  ],
+  "ANG_HOME": [
+   90,
+   90,
+   90,
+   90
+  ],
+  "GARRA_FECHADA": 74,
+  "GARRA_ABERTA": 110
+ },
+ "z_ombro": 68.8,
+ "base": [
+  [
+   5,
+   -85,
+   "conjunto girado 85° para a direita",
+   "ANG_MIN"
+  ],
+  [
+   45,
+   -45,
+   "conjunto girado 45° para a direita",
+   ""
+  ],
+  [
+   90,
+   0,
+   "braço apontando para a frente (referência)",
+   "HOME"
+  ],
+  [
+   135,
+   45,
+   "conjunto girado 45° para a esquerda",
+   ""
+  ],
+  [
+   175,
+   85,
+   "conjunto girado 85° para a esquerda",
+   "ANG_MAX"
+  ]
+ ],
+ "ombro": [
+  [
+   15,
+   -75,
+   "braço 75° fora da vertical, inclinado para tras (-X)",
+   200.0,
+   93.0,
+   52.0,
+   "ANG_MIN"
+  ],
+  [
+   45,
+   -45,
+   "braço 45° fora da vertical, inclinado para tras (-X)",
+   201.0,
+   76.0,
+   52.0,
+   ""
+  ],
+  [
+   90,
+   0,
+   "braço na VERTICAL (referência)",
+   165.0,
+   119.0,
+   52.0,
+   "HOME"
+  ],
+  [
+   120,
+   30,
+   "braço 30° fora da vertical, inclinado para a frente (+X)",
+   146.0,
+   138.0,
+   52.0,
+   ""
+  ],
+  [
+   135,
+   45,
+   "braço 45° fora da vertical, inclinado para a frente (+X)",
+   135.0,
+   133.0,
+   32.0,
+   ""
+  ],
+  [
+   165,
+   75,
+   "braço 75° fora da vertical, inclinado para a frente (+X)",
+   104.0,
+   112.0,
+   -28.0,
+   "ANG_MAX"
+  ]
+ ],
+ "cotovelo": [
+  [
+   20,
+   "antebraço aberto: 70° a mais que a perpendicular (tende a alinhar com o braço em 0°)",
+   249.0,
+   53.0,
+   52.0,
+   "alcance/altura máximos depois de calibrar"
+  ],
+  [
+   40,
+   "antebraço aberto: 50° a mais que a perpendicular (tende a alinhar com o braço em 0°)",
+   228.0,
+   83.0,
+   52.0,
+   "ANG_MIN de fábrica"
+  ],
+  [
+   60,
+   "antebraço aberto: 30° a mais que a perpendicular (tende a alinhar com o braço em 0°)",
+   197.0,
+   106.0,
+   52.0,
+   ""
+  ],
+  [
+   90,
+   "antebraço PERPENDICULAR ao braço (referência)",
+   165.0,
+   119.0,
+   52.0,
+   "HOME"
+  ],
+  [
+   120,
+   "antebraço dobrado sobre o braço: 30° além da perpendicular",
+   156.0,
+   103.0,
+   52.0,
+   ""
+  ],
+  [
+   140,
+   "antebraço dobrado sobre o braço: 50° além da perpendicular",
+   156.0,
+   79.0,
+   46.0,
+   "ANG_MAX de fábrica"
+  ],
+  [
+   148,
+   "antebraço dobrado sobre o braço: 58° além da perpendicular",
+   156.0,
+   67.0,
+   36.0,
+   "limite físico: a palma encosta na plataforma"
+  ]
+ ],
+ "garra": [
+  [
+   72,
+   -3,
+   -6,
+   "ANG_MIN de fábrica (mandíbulas se tocam em ≈72,5°)"
+  ],
+  [
+   74,
+   -1,
+   -2,
+   "GARRA_FECHADA"
+  ],
+  [
+   75,
+   0,
+   0,
+   "mandíbulas paralelas — pose de montagem do horn"
+  ],
+  [
+   80,
+   5,
+   10,
+   ""
+  ],
+  [
+   90,
+   15,
+   30,
+   "HOME"
+  ],
+  [
+   100,
+   25,
+   50,
+   ""
+  ],
+  [
+   110,
+   35,
+   70,
+   "GARRA_ABERTA = ANG_MAX"
+  ]
+ ]
+}

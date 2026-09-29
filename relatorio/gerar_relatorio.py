@@ -132,7 +132,7 @@ tabela(["Item", "Especificação"], [
     ["Plano de fechamento da garra", "Horizontal — engrenagens com eixo vertical quando o antebraço está na horizontal; as mandíbulas ficam 2,8 mm abaixo do eixo do antebraço e 39 mm à frente da ponta das chapas"],
     ["Alcance horizontal máx.", "≈ 186 mm a partir do eixo da base (ombro em 165°, cotovelo quase esticado); altura do ombro 68,8 mm; altura máxima da ponta dos dedos ≈ 249 mm"],
     ["Opções de garra", "Duas ferramentas intercambiáveis: A (mandíbula plana, objetos prismáticos) e B (mandíbula em V, auto-centrante para cilindros e esferas em pé) — ver seção 5.6"],
-    ["Abertura da garra", "0 mm (mandíbulas encostadas, S4 ≈ 72,5°) a ≈ 57 mm na raiz / 71 mm nas pontas (S4 = 110°)"],
+    ["Abertura da garra", "0 mm (mandíbulas encostadas, S4 = 73°) a ≈ 57 mm na raiz / 71 mm nas pontas (S4 = 110°)"],
     ["Carga útil estimada", "≈ 20 g com o braço estendido (186 mm) e ≈ 65 g com o braço recolhido (vertical), mantendo o ombro em ≤ 50 % do torque de travamento (1,8 kgf·cm a 5 V); ≈ 30 g aceitando 60 %"],
     ["Alimentação", "Fonte chaveada 5 V / 5 A para os servos (mínimo aceitável 3 A — ver seção 8.1); Arduino pelo USB OU pela mesma fonte (nunca os dois ao mesmo tempo); GND comum"],
     ["Material / massa impressa", f"PLA, ≈ {sum(p['massa_estimada_g'] for p in info):.0f} g no total ({len(info)} peças, incluindo o controle de mão dos joysticks)"],
@@ -287,7 +287,7 @@ tabela(["Ângulo de S4", "75° (dedos paralelos)", "80°", "90°", "100°", "110
 ], [3.2, 3.2, 2.2, 2.2, 2.2, 2.6])
 P("Perto do fechamento a diferença é grande: com os dedos quase paralelos a opção A só consegue prender uma lâmina de "
   "4 mm, enquanto o V já abraça um cilindro de 10 mm. Na abertura máxima as duas são equivalentes (o V “gasta” 5 mm de "
-  "cada mandíbula). Em ambas, o ângulo em que as mandíbulas se tocam é o mesmo (≈ 72,5° no servo), então GARRA_FECHADA "
+  "cada mandíbula). Em ambas, o ângulo em que as mandíbulas se tocam é o mesmo (73° no servo), então GARRA_FECHADA "
   "e ANG_MIN[3] do firmware não mudam com a troca.", al="j")
 P("Troca da garra (2 minutos): soltar o parafuso central do horn de S4 e o parafuso M3 × 25 do dedo livre, retirar os "
   "dois dedos, montar o outro par na mesma ordem da seção 7.1 (S4 em 75°, dedos paralelos) e reapertar. O horn continua "

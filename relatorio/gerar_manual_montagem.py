@@ -19,6 +19,8 @@ from parafusos import FIXADORES, custo_total
 IMG = lambda n: os.path.join(RAIZ, "imagens", n)
 SAIDA = os.path.join(RAIZ, "relatorio", "Manual_Montagem.docx")
 info = json.load(open(os.path.join(RAIZ, "cad", "pecas_info.json"), encoding="utf-8"))
+_mapa = os.path.join(RAIZ, "cad", "mapa_angulos.json")
+MAPA = json.load(open(_mapa, encoding="utf-8")) if os.path.exists(_mapa) else None
 
 doc = Document()
 for s in doc.sections:
@@ -405,7 +407,7 @@ passo(9, "Garra (dois dedos) — bancada", "15 min",
       "a interpenetração medida é zero em 361 posições, com 0,19 mm de folga de flanco (≈1,6° de backlash). "
       "O dedo livre já sai do CAD com meia fase de dente (11,25°) para que as mandíbulas fechem paralelas.",
       "Girando o dedo motriz com a mão, o livre acompanha sem ranger e sem travar. As mandíbulas devem se "
-      "encostar (sem esmagar) por volta de 72,5° no servo e abrir até ≈57 mm a 110°.",
+      "encostar (sem esmagar) em S4 = 73° (valor medido) e abrir até ≈57 mm a 110°.",
       [("ATENÇÃO", "Se apertar a nylock até o fim, a engrenagem prende e S4 trava — o servo esquenta e pode "
                     "queimar. A porca autotravante existe justamente para poder ficar frouxa sem soltar."),
        ("DICA", "Quem imprimir as duas opções de dedo (plana 07/08 e em V 10/11) pode deixar um horn montado em "
@@ -554,7 +556,7 @@ tabela(["Junta", "Limites de fábrica", "Limite físico medido no modelo"], [
     ["0 — base", "5° a 175°", "Sem colisão em toda a faixa"],
     ["1 — ombro", "15° a 165°", "Acima de 135° com o cotovelo dobrado, o antebraço desce abaixo do plano da mesa"],
     ["2 — cotovelo", "40° a 140°", "A palma encosta na plataforma a 148°; o braço só a 160°"],
-    ["3 — garra", "72° a 110°", "Mandíbulas se tocam em ≈72,5°; abertura máxima em 110°"],
+    ["3 — garra", "72° a 110°", "Mandíbulas se tocam em 73° — 1° ACIMA do ANG_MIN de fábrica; abertura máxima em 110°"],
 ], [2.6, 4.4, 9.0])
 
 H("6.1 Centro dos joysticks", 2)
@@ -598,8 +600,78 @@ N(["No modo manual, leve o braço até a primeira pose com os joysticks.",
    "atuais antes de enviá-la aos servos."])
 doc.add_page_break()
 
-# ================================================================== 7 TESTES
-H("7. Testes de aceitação", 1)
+# ================================================================== 7 MAPA DE ÂNGULOS
+H("7. Mapa de ângulos — o que cada grau faz em cada elo", 1)
+P("Todas as tabelas desta seção são geradas por cad/mapa_angulos.py, que lê os limites direto do firmware "
+  "(ANG_MIN, ANG_MAX, ANG_HOME, GARRA_FECHADA e GARRA_ABERTA) e aplica ao modelo 3D as mesmas transformações "
+  "de cad/gerar_pecas.py. Os valores de altura e alcance são medidos nas malhas, não estimados.", al="j")
+P("Convenção usada no projeto", b=True, sz=10.5)
+tabela(["Junta", "Ângulo do servo", "Ângulo geométrico do modelo", "Referência (90°)"], [
+    ["0 — base", "S1 = 90 + θ1", "θ1 = giro da plataforma", "Braço apontando para a frente"],
+    ["1 — ombro", "S2 = 90 + θ2", "θ2 = desvio do braço em relação à vertical", "Braço na vertical"],
+    ["2 — cotovelo", "S3 = ângulo relativo", "ângulo entre o antebraço e o braço (0° = alinhados)", "Antebraço perpendicular ao braço"],
+    ["3 — garra", "S4 = 75 + α", "α = giro de CADA dedo (a abertura entre as mandíbulas é 2α)", "α = 15°, garra entreaberta"],
+], [2.2, 3.4, 6.4, 4.0])
+caixa("ATENÇÃO", "Estas tabelas dizem o TAMANHO do movimento, não o sentido. Qual lado é 'para a frente' depende "
+                  "de como o servo foi montado e do vetor SENTIDO[] do firmware — descubra o sentido real na "
+                  "calibração (seção 6.2) e, se estiver invertido, é o sinal de SENTIDO[] que muda, nunca a tabela.")
+
+if MAPA:
+    lim = MAPA["limites"]
+    P(f"Eixo do ombro a {MAPA['z_ombro']} mm da mesa; o cotovelo fica 70 mm acima do ombro, medidos ao longo do braço.",
+      sz=9.5, i=True)
+
+    H("7.1 Junta 0 — base (S1)", 2)
+    P(f"Faixa do firmware: {lim['ANG_MIN'][0]}° a {lim['ANG_MAX'][0]}°, home {lim['ANG_HOME'][0]}°. "
+      "Girar a base não muda a altura nem o alcance — só a direção para onde o braço aponta. "
+      "Um grau de servo é exatamente um grau de giro da plataforma.", al="j")
+    tabela(["S1", "θ1", "Pose", "Observação"],
+           [[f"{a}°", f"{b:+d}°", c, d] for a, b, c, d in MAPA["base"]], [1.4, 1.6, 9.0, 4.0])
+
+    H("7.2 Junta 1 — ombro (S2)", 2)
+    P(f"Faixa do firmware: {lim['ANG_MIN'][1]}° a {lim['ANG_MAX'][1]}°, home {lim['ANG_HOME'][1]}°. "
+      "Medidas tiradas com o cotovelo em 90°; a altura é a do ponto mais alto do conjunto e o alcance é medido "
+      "do eixo da base.", al="j")
+    tabela(["S2", "θ2", "Pose do braço", "Altura máx.", "Alcance", "Ponto mais baixo", "Nota"],
+           [[f"{a}°", f"{b:+d}°", c, f"{d:.0f} mm", f"{e:.0f} mm", f"{f:.0f} mm", g]
+            for a, b, c, d, e, f, g in MAPA["ombro"]], [1.2, 1.2, 5.6, 1.8, 1.6, 1.9, 2.7], fs=8)
+    caixa("ATENÇÃO", "Repare na última linha: com o ombro no limite de 165° o conjunto desce a 28 mm ABAIXO do "
+                      "plano da mesa — é a pose em que o antebraço bate no disco da base. Ela existe dentro dos "
+                      "limites de fábrica; se o seu braço vai operar sobre uma mesa, limite ANG_MAX[1] a 135°.")
+
+    H("7.3 Junta 2 — cotovelo (S3)", 2)
+    P(f"Faixa do firmware: {lim['ANG_MIN'][2]}° a {lim['ANG_MAX'][2]}°, home {lim['ANG_HOME'][2]}°. "
+      "Medidas tiradas com o braço na vertical (ombro em 90°). Este é o ângulo RELATIVO entre o antebraço e o "
+      "braço: 0° seria o antebraço perfeitamente alinhado com o braço.", al="j")
+    tabela(["S3", "Pose do antebraço", "Altura máx.", "Alcance", "Ponto mais baixo", "Nota"],
+           [[f"{a}°", b, f"{c:.0f} mm", f"{d:.0f} mm", f"{e:.0f} mm", f]
+            for a, b, c, d, e, f in MAPA["cotovelo"]], [1.2, 6.4, 1.8, 1.6, 1.9, 3.1], fs=8)
+    caixa("DICA", "A altura máxima (249 mm) e o alcance máximo (186 mm) só aparecem com o cotovelo em 20°, que "
+                   "está FORA do limite de fábrica (40°). Depois de descobrir na calibração de que lado o "
+                   "antebraço estica, vale abrir ANG_MIN[2] até 20° — é onde o braço ganha 100 mm de altura.")
+
+    H("7.4 Junta 3 — garra (S4)", 2)
+    P(f"Faixa do firmware: {lim['ANG_MIN'][3]}° a {lim['ANG_MAX'][3]}°; fechada em {lim['GARRA_FECHADA']}°, "
+      f"aberta em {lim['GARRA_ABERTA']}°. Cada dedo gira α = S4 − 75, e os dois giram simétricos: a abertura "
+      "angular entre as mandíbulas é 2α. Em 75° as mandíbulas ficam paralelas — é a pose de montagem do horn.", al="j")
+    tabela(["S4", "α (cada dedo)", "Abertura angular", "Nota"],
+           [[f"{a}°", f"{b:+d}°", f"{c:+.0f}°", d] for a, b, c, d in MAPA["garra"]], [1.3, 2.4, 2.8, 9.5], fs=8.5)
+    P("Maior objeto cilíndrico que as duas mandíbulas tocam ao mesmo tempo (medido por cad/verificacao.py):",
+      b=True, sz=10.5)
+    tabela(["Dedos", "S4 = 75°", "80°", "90°", "100°", "110°"], [
+        ["A — mandíbula plana (07/08)", "Ø4,0 mm", "Ø12,6 mm", "Ø29,0 mm", "Ø43,6 mm", "Ø57,8 mm"],
+        ["B — mandíbula em V (10/11)", "Ø9,9 mm", "Ø15,1 mm", "Ø27,9 mm", "Ø41,0 mm", "Ø53,1 mm"],
+    ], [5.6, 2.1, 2.1, 2.1, 2.1, 2.1], fs=8.5)
+    caixa("ATENÇÃO", "As mandíbulas das duas opções se encostam em S4 = 73° (medido em passos de 0,25°), mas o "
+                      "ANG_MIN[3] de fábrica é 72° — um grau ALÉM do contato. Se você levar a garra ao mínimo pelo "
+                      "joystick, ela fecha contra si mesma e o servo trava. Na calibração (seção 6.4), suba "
+                      "ANG_MIN[3] para 73 ou 74 no seu braço.")
+else:
+    P("Execute 'python cad/mapa_angulos.py' antes de gerar este manual para incluir as tabelas de ângulos.", i=True)
+doc.add_page_break()
+
+# ================================================================== 8 TESTES
+H("8. Testes de aceitação", 1)
 P("Preencha esta tabela na entrega — ela é a evidência de que o protótipo funciona.", al="j")
 tabela(["#", "Teste", "Critério", "OK?"], [
     ["1", "Home ao ligar", "Os 4 servos vão para 90° e o braço fica como a Figura 1", "☐"],
@@ -619,8 +691,8 @@ figura(IMG("montagem_captura.png"), "Figura 7 — Pose de captura: a garra fecha
                                     "objeto pelo lado.", 13.5)
 doc.add_page_break()
 
-# ================================================================== 8 PROBLEMAS
-H("8. Solução de problemas", 1)
+# ================================================================== 9 PROBLEMAS
+H("9. Solução de problemas", 1)
 tabela(["Sintoma", "Causa provável", "O que fazer"], [
     ["Todos os servos tremem sem parar",
      "GND da fonte não está ligado ao GND do Arduino",
@@ -672,7 +744,7 @@ tabela(["Sintoma", "Causa provável", "O que fazer"], [
      "Ativar 'X-Y hole compensation' de 0,1 mm no fatiador e reimprimir."],
 ], [4.6, 5.2, 6.2], fs=8.5)
 
-H("9. Manutenção", 1)
+H("10. Manutenção", 1)
 B(["Reaperte os 4 parafusos M3 × 10 e os parafusos centrais dos horns depois da primeira hora de uso: o PLA "
    "acomoda e aparece folga.",
    "Guarde o braço na pose de home ou recolhido — deixar o braço estendido por dias com o servo desligado "
