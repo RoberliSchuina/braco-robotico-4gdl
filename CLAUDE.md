@@ -18,6 +18,7 @@ Entregas: BOM, peças 3D (Tinkercad, uma por arquivo) + STL, protótipo montado,
 - [x] 2026-09-20: guia de ligações furo a furo `Circuito_Braco_Robotico.html` (SVG da protoboard + esquema PNG em base64 — regerar o PNG exige reembutir)
 - [x] Relatório `relatorio/Relatorio_Braco_Robotico.docx` (gerado por `relatorio/gerar_relatorio.py`)
 - [x] Lista de parafusos à parte: dados em `relatorio/parafusos.py` → `Lista_Parafusos_Fixadores.docx` + Apêndice C
+- [x] 2026-09-28: **manual de montagem** `relatorio/Manual_Montagem.docx` (gerado por `relatorio/gerar_manual_montagem.py`): 12 etapas com "como fazer / por que assim / conferir", preparo de furos, centragem dos servos em 90°, elétrica, calibração, testes de aceitação e solução de problemas
 - [x] `cad/verificacao.py`: varreduras de colisão, engrenagens, envelope e torque (rodar depois de qualquer mudança de cota)
 - [ ] Importar cada STL em um projeto separado no Tinkercad e exportar de lá — passo manual
 - [ ] Preencher nome do aluno/professor na capa do relatório; abrir no Word e aceitar "atualizar campos" (sumário)
@@ -35,6 +36,7 @@ python cad/verificacao_eletrica.py   # ~1 s: consumo, fonte, capacitor, queda no
 python cad/gerar_esquema.py      # -> imagens/esquema_eletrico.png
 python relatorio/gerar_relatorio.py
 python relatorio/gerar_lista_parafusos.py
+python relatorio/gerar_manual_montagem.py
 ```
 Toda cota está em `cad/gerar_pecas.py`; alterar lá e regenerar (não editar STL manualmente).
 Armadilha de ambiente: patches via `python - <<'EOF'` (heredoc) no Git Bash às vezes falham em casar strings com acento — escrever o script de patch em arquivo (Write) e executá-lo.

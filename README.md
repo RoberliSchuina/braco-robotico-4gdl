@@ -9,6 +9,7 @@
 | Esquema elétrico | `imagens/esquema_eletrico.png` |
 | Guia de ligações furo a furo (protoboard) | `Circuito_Braco_Robotico.html` (autocontido; abrir no navegador ou imprimir) |
 | Lista de parafusos e fixadores (à parte) | `relatorio/Lista_Parafusos_Fixadores.docx` (também Apêndice C do relatório) |
+| Manual de montagem passo a passo | `relatorio/Manual_Montagem.docx` |
 | Memória de desenvolvimento/revisão | `CLAUDE.md` |
 
 Impressão (Bambu Lab A1): PLA, bico 0,4 mm, camada 0,20 mm, preenchimento 15 %, 3 paredes, sem suportes, peças já orientadas nos STL (≈ 132 g, ≈ 6,6 h).
@@ -17,7 +18,7 @@ Impressão (Bambu Lab A1): PLA, bico 0,4 mm, camada 0,20 mm, preenchimento 15 %,
 
 **Duas opções de garra.** Opção A (peças 07/08, mandíbula plana) para objetos de faces planas — blocos, caixinhas, cartões. Opção B (peças 10/11, mandíbula em V de 95°) para cilindros e esferas: contato em 4 pontos, o objeto se auto-centra e não rola; como a garra fecha no plano horizontal, o sulco do V fica vertical e pega caneta, pilha ou frasco em pé na mesa. As duas usam a mesma engrenagem e os mesmos parafusos — a troca leva dois minutos e não muda o firmware (ver `imagens/garras.png`).
 
-Regenerar tudo: `python cad/gerar_pecas.py && python cad/gerar_esquema.py && python relatorio/gerar_relatorio.py && python relatorio/gerar_lista_parafusos.py`\nConferir a mecânica (colisões, engrenagens, envelope e torque): `python cad/verificacao.py`
+Regenerar tudo: `python cad/gerar_pecas.py && python cad/gerar_esquema.py && python relatorio/gerar_relatorio.py && python relatorio/gerar_lista_parafusos.py && python relatorio/gerar_manual_montagem.py`\nConferir a mecânica (colisões, engrenagens, envelope e torque): `python cad/verificacao.py`
 (requer `pip install trimesh manifold3d shapely numpy matplotlib python-docx`).
 
 Comando: 2 módulos joystick KY-023 (J1 = base/ombro + botão gravar/reproduzir; J2 = garra/cotovelo + botão abre/fecha garra / home). Controle incremental com zona morta; ligar com os joysticks soltos (calibração do centro).
