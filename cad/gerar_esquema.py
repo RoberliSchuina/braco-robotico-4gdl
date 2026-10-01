@@ -65,7 +65,7 @@ joys = [  # (nome, y0, terminais direita: (rótulo, y, pino Arduino, y do pino, 
     ("JOYSTICK 1\n(KY-023)", 58, [("SW", 74, "D2", 74, VERDE), ("VRx", 66, "A0", 66, AZUL), ("VRy", 61, "A1", 61, AZUL)], 76, 68,
      "base (VRx) · ombro (VRy)\nSW: grava / reproduz"),
     ("JOYSTICK 2\n(KY-023)", 30, [("VRx", 50, "A2", 50, AZUL), ("VRy", 45, "A3", 45, AZUL), ("SW", 38, "D4", 38, VERDE)], 47, 34,
-     "garra (VRx) · cotovelo (VRy)\nSW: abre/fecha garra; longo = home"),
+     "garra (VRx) · cotovelo (VRy)\nSW: curto = pos. referência; longo = garra"),
 ]
 for nome, y0, terms, y5, yg, desc in joys:
     caixa(6, y0, 16, 22, nome, "#fff2cc", 8, ty=y0 + 13)

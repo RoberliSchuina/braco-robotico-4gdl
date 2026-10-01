@@ -126,7 +126,7 @@ tabela(["Item", "Especificação"], [
     ["Graus de liberdade", "4 (base, ombro, cotovelo, garra)"],
     ["Atuadores", "4 × micro-servo SG90 (plástico) ou MG90S (metálico, recomendado para ombro e cotovelo)"],
     ["Controlador", "Arduino UNO R3 (ATmega328P, 16 MHz)"],
-    ["Interface de comando", "2 módulos joystick analógico KY-023 (4 eixos + 2 botões: gravar/reproduzir poses, abrir/fechar garra, home) + terminal serial"],
+    ["Interface de comando", "2 módulos joystick analógico KY-023 (4 eixos + 2 botões: gravar/reproduzir poses, voltar à posição de referência, abrir/fechar garra) + terminal serial"],
     ["Estrutura dos elos", "Forquilha simétrica: 2 chapas de 4 mm por elo (motriz + livre), vão de 37,6 mm no braço e 67,2 mm no antebraço; pivô livre em munhão Ø9 impresso"],
     ["Comprimento dos elos", "Braço 70 mm (ombro→cotovelo); antebraço 62 mm (cotovelo→eixo da garra); dedos 55 mm"],
     ["Plano de fechamento da garra", "Horizontal — engrenagens com eixo vertical quando o antebraço está na horizontal; as mandíbulas ficam 2,8 mm abaixo do eixo do antebraço e 39 mm à frente da ponta das chapas"],
@@ -369,7 +369,7 @@ tabela(["Sinal", "Pino Arduino", "Componente", "Observação"], [
     ["Joystick 1 — VRx / VRy", "A0 / A1", "KY-023 (base / ombro)", "+5 V e GND do Arduino"],
     ["Joystick 1 — SW", "D2", "Botão do joystick (para GND)", "INPUT_PULLUP; curto = grava pose, longo = reproduz/para"],
     ["Joystick 2 — VRx / VRy", "A2 / A3", "KY-023 (garra / cotovelo)", "+5 V e GND do Arduino"],
-    ["Joystick 2 — SW", "D4", "Botão do joystick (para GND)", "INPUT_PULLUP; curto = abre/fecha garra, longo = home"],
+    ["Joystick 2 — SW", "D4", "Botão do joystick (para GND)", "INPUT_PULLUP; curto = volta à posição de referência, longo = abre/fecha garra"],
     ["LED de status", "D13", "LED da placa", "Aceso = manual; piscando = reproduzindo"],
     ["+5 V servos", "—", "Fonte 5 V / 5 A + C1 1000 µF", "NUNCA pelo 5 V do Arduino"],
     ["GND", "GND", "Comum a fonte, servos, pots e Arduino", "Obrigatório"],
@@ -467,14 +467,14 @@ P("Fiação: o orçamento de queda de tensão é de apenas 200 mV (5,0 V da font
 H("9. Firmware (Arduino IDE)", 1)
 P("Arquivo: firmware/braco_robotico/braco_robotico.ino. Bibliotecas: Servo.h e EEPROM.h (nativas da IDE). Placa: Arduino UNO.", al="j")
 H("9.1 Estrutura", 2)
-B([("Configuração: ", "tabelas de pinos, limites (ANG_MIN/ANG_MAX) e posição de repouso (ANG_HOME) por junta."),
+B([("Configuração: ", "tabelas de pinos, limites (ANG_MIN/ANG_MAX) e posição de referência (POS_REF) por junta."),
    ("Laço de controle (50 Hz): ", "lê os 4 eixos dos joysticks; fora da zona morta (±60 counts) calcula um incremento de ângulo proporcional ao quadrado da deflexão (até VEL_JOY = 2 °/passo = 100 °/s), soma ao alvo da junta dentro dos limites e aproxima a posição atual do alvo a no máximo velMax graus por passo (rampa de velocidade)."),
    ("Máquina de estados: ", "MANUAL (joysticks) ↔ REPRODUZINDO (percorre as poses gravadas com pausa de 0,5 s em cada uma). Ao parar a reprodução o alvo assume a posição atual, e os joysticks continuam de onde o braço parou, sem saltos."),
-   ("Botões dos joysticks: ", "SW1 curto = grava pose (LED pisca 3×), SW1 longo ≥ 0,8 s = inicia/para reprodução; SW2 curto = abre/fecha a garra, SW2 longo = posição de repouso (home). Debounce por tempo; estrutura Botao reutilizada para os dois."),
+   ("Botões dos joysticks: ", "SW1 curto = grava pose (LED pisca 3×), SW1 longo ≥ 0,8 s = inicia/para reprodução; SW2 curto = volta à posição de referência (POS_REF, 90° em todas as juntas), SW2 longo = abre/fecha a garra. Debounce por tempo; estrutura Botao reutilizada para os dois."),
    ("Serial: ", "comandos de uma letra para calibração e depuração (p, g, l, r, m, h, a, j, e, c, v<n>, s <junta> <ângulo>); 'j' recalibra o centro dos joysticks."),
    ("EEPROM: ", "poses salvas com assinatura 0xB4A1 e carregadas automaticamente na partida.")])
 H("9.2 Fluxo de execução", 2)
-N(["setup(): inicializa serial, botões e LED; anexa os servos um a um (150 ms entre eles) já na posição home; calibra o centro dos 4 eixos (16 leituras, joysticks soltos); carrega poses da EEPROM.",
+N(["setup(): inicializa serial, botões e LED; anexa os servos um a um (150 ms entre eles) já na posição de referência; calibra o centro dos 4 eixos (16 leituras, joysticks soltos); carrega poses da EEPROM.",
    "loop(): trata serial e botões a cada iteração; a cada 20 ms executa o passo do modo atual (leJoysticks + avancaParaAlvo, ou passoReproducao) e atualiza o LED.",
    "avancaParaAlvo(): para cada junta, move no máximo velMax graus, satura nos limites e escreve nos servos."])
 H("9.3 Testes e calibração", 2)
@@ -483,7 +483,7 @@ N(["Sem as peças montadas, carregar o firmware e usar 's <j> <ang>' para verifi
    "Calibrar a garra: com o horn montado a 75° (dedos paralelos, vão de 4 mm), reduzir o ângulo de 1 em 1 grau ('s 3 74', 's 3 73'...) até as mandíbulas encostarem; anotar esse ângulo em ANG_MIN[3] e usar ≈ 2° acima dele em GARRA_FECHADA (nunca abaixo: o servo fica em travamento). 's 3 110' deve abrir ≈ 57 mm na raiz das mandíbulas.",
    "Verificar o sentido de cada eixo do joystick (inclinar para a direita deve girar a base para a direita etc.); inverter pelo vetor SENTIDO[] se necessário.",
    "Com os joysticks soltos, o braço deve ficar imóvel; se houver deriva, aumentar ZONA_MORTA ou recalibrar com 'j'.",
-   "Validar o modo manual (suavidade, ausência de tremor) e o ciclo gravar → reproduzir com 4–6 poses (ex.: pegar e soltar um objeto de 20 g usando SW2 para a garra).",
+   "Validar o modo manual (suavidade, ausência de tremor) e o ciclo gravar → reproduzir com 4–6 poses (ex.: pegar e soltar um objeto de 20 g usando SW2 longo para a garra).",
    "Medir a corrente da fonte durante o movimento (multímetro em série na linha +5 V dos servos): esperam-se ≈ 0,5 A em repouso e 1,2–1,9 A com os quatro eixos em movimento sob carga (seção 8.1). Leitura muito acima disso indica servo travado contra um batente; se o Arduino reiniciar, verificar o GND comum e o capacitor C1.",
    "Medir a tensão no barramento dos servos com o braço em esforço: não deve cair abaixo de 4,8 V. Se cair, a fonte está subdimensionada ou os fios de alimentação são finos demais."])
 

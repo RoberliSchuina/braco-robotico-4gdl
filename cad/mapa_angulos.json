@@ -12,7 +12,7 @@
    140,
    110
   ],
-  "ANG_HOME": [
+  "POS_REF": [
    90,
    90,
    90,
@@ -39,7 +39,7 @@
    90,
    0,
    "braço apontando para a frente (referência)",
-   "HOME"
+   "REFERÊNCIA"
   ],
   [
    135,
@@ -80,7 +80,7 @@
    165.0,
    119.0,
    52.0,
-   "HOME"
+   "REFERÊNCIA"
   ],
   [
    120,
@@ -141,7 +141,7 @@
    165.0,
    119.0,
    52.0,
-   "HOME"
+   "REFERÊNCIA"
   ],
   [
    120,
@@ -173,7 +173,7 @@
    72,
    -3,
    -6,
-   "ANG_MIN de fábrica (mandíbulas se tocam em ≈72,5°)"
+   "ANG_MIN de fábrica — 1° ABAIXO do toque das mandíbulas (73°, medido por verificacao.py)"
   ],
   [
    74,
@@ -197,7 +197,7 @@
    90,
    15,
    30,
-   "HOME"
+   "REFERÊNCIA"
   ],
   [
    100,

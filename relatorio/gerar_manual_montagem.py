@@ -520,7 +520,7 @@ P("Comandos do Monitor Serial:", b=True, sz=10.5)
 tabela(["Comando", "O que faz"], [
     ["p", "Imprime as posições atuais das 4 juntas"],
     ["s <junta> <ângulo>", "Move uma junta para um ângulo (junta 0=base, 1=ombro, 2=cotovelo, 3=garra)"],
-    ["h", "Vai para a posição de home (90° em todas)"],
+    ["h", "Vai para a posição de referência (POS_REF: 90° em todas)"],
     ["a", "Alterna a garra entre aberta e fechada"],
     ["g", "Grava a pose atual (máximo de 16)"],
     ["r", "Inicia ou para a reprodução das poses gravadas"],
@@ -539,8 +539,8 @@ tabela(["Ação", "Resultado"], [
     ["Joystick 2 — eixo X", "Abre/fecha a garra (junta 3)"],
     ["Botão 1 (toque curto)", "Grava a pose atual"],
     ["Botão 1 (toque longo, 0,8 s)", "Inicia ou para a reprodução; LED pisca enquanto reproduz"],
-    ["Botão 2 (toque curto)", "Abre/fecha a garra de uma vez"],
-    ["Botão 2 (toque longo, 0,8 s)", "Volta para home"],
+    ["Botão 2 (toque curto)", "Volta à posição de referência (POS_REF: 90° em todas as juntas)"],
+    ["Botão 2 (toque longo, 0,8 s)", "Abre/fecha a garra de uma vez"],
 ], [6.0, 10.0])
 P("O joystick funciona como VELOCIDADE, não como posição: a junta se move enquanto a alavanca estiver fora do "
   "centro, e para onde estiver quando você soltar. A zona morta é de ±60 counts (≈6 %) e a velocidade cresce com "
@@ -572,7 +572,7 @@ N(["Empurre cada alavanca para um lado e veja se a junta vai para o lado esperad
 H("6.3 ANG_MIN e ANG_MAX de bancada", 2)
 caixa("ATENÇÃO", "Faça esta etapa com o braço preso na tábua, uma junta de cada vez, com a mão perto do cabo da "
                   "fonte para desligar se algo encostar.")
-N(["Leve tudo para home com 'h'.",
+N(["Leve tudo para a referência com 'h' (ou um toque curto no botão 2).",
    "Escolha uma junta e vá aumentando o ângulo de 5 em 5 graus com 's <junta> <ângulo>', olhando o ponto de "
    "colisão mais próximo.",
    "Quando faltarem uns 5° para encostar, pare e anote o valor: esse é o seu ANG_MAX daquela junta.",
@@ -603,7 +603,7 @@ doc.add_page_break()
 # ================================================================== 7 MAPA DE ÂNGULOS
 H("7. Mapa de ângulos — o que cada grau faz em cada elo", 1)
 P("Todas as tabelas desta seção são geradas por cad/mapa_angulos.py, que lê os limites direto do firmware "
-  "(ANG_MIN, ANG_MAX, ANG_HOME, GARRA_FECHADA e GARRA_ABERTA) e aplica ao modelo 3D as mesmas transformações "
+  "(ANG_MIN, ANG_MAX, POS_REF, GARRA_FECHADA e GARRA_ABERTA) e aplica ao modelo 3D as mesmas transformações "
   "de cad/gerar_pecas.py. Os valores de altura e alcance são medidos nas malhas, não estimados.", al="j")
 P("Convenção usada no projeto", b=True, sz=10.5)
 tabela(["Junta", "Ângulo do servo", "Ângulo geométrico do modelo", "Referência (90°)"], [
@@ -622,14 +622,14 @@ if MAPA:
       sz=9.5, i=True)
 
     H("7.1 Junta 0 — base (S1)", 2)
-    P(f"Faixa do firmware: {lim['ANG_MIN'][0]}° a {lim['ANG_MAX'][0]}°, home {lim['ANG_HOME'][0]}°. "
+    P(f"Faixa do firmware: {lim['ANG_MIN'][0]}° a {lim['ANG_MAX'][0]}°, referência {lim['POS_REF'][0]}°. "
       "Girar a base não muda a altura nem o alcance — só a direção para onde o braço aponta. "
       "Um grau de servo é exatamente um grau de giro da plataforma.", al="j")
     tabela(["S1", "θ1", "Pose", "Observação"],
            [[f"{a}°", f"{b:+d}°", c, d] for a, b, c, d in MAPA["base"]], [1.4, 1.6, 9.0, 4.0])
 
     H("7.2 Junta 1 — ombro (S2)", 2)
-    P(f"Faixa do firmware: {lim['ANG_MIN'][1]}° a {lim['ANG_MAX'][1]}°, home {lim['ANG_HOME'][1]}°. "
+    P(f"Faixa do firmware: {lim['ANG_MIN'][1]}° a {lim['ANG_MAX'][1]}°, referência {lim['POS_REF'][1]}°. "
       "Medidas tiradas com o cotovelo em 90°; a altura é a do ponto mais alto do conjunto e o alcance é medido "
       "do eixo da base.", al="j")
     tabela(["S2", "θ2", "Pose do braço", "Altura máx.", "Alcance", "Ponto mais baixo", "Nota"],
@@ -640,7 +640,7 @@ if MAPA:
                       "limites de fábrica; se o seu braço vai operar sobre uma mesa, limite ANG_MAX[1] a 135°.")
 
     H("7.3 Junta 2 — cotovelo (S3)", 2)
-    P(f"Faixa do firmware: {lim['ANG_MIN'][2]}° a {lim['ANG_MAX'][2]}°, home {lim['ANG_HOME'][2]}°. "
+    P(f"Faixa do firmware: {lim['ANG_MIN'][2]}° a {lim['ANG_MAX'][2]}°, referência {lim['POS_REF'][2]}°. "
       "Medidas tiradas com o braço na vertical (ombro em 90°). Este é o ângulo RELATIVO entre o antebraço e o "
       "braço: 0° seria o antebraço perfeitamente alinhado com o braço.", al="j")
     tabela(["S3", "Pose do antebraço", "Altura máx.", "Alcance", "Ponto mais baixo", "Nota"],
@@ -674,7 +674,8 @@ doc.add_page_break()
 H("8. Testes de aceitação", 1)
 P("Preencha esta tabela na entrega — ela é a evidência de que o protótipo funciona.", al="j")
 tabela(["#", "Teste", "Critério", "OK?"], [
-    ["1", "Home ao ligar", "Os 4 servos vão para 90° e o braço fica como a Figura 1", "☐"],
+    ["1", "Referência ao ligar", "Os 4 servos vão para 90° e o braço fica como a Figura 1", "☐"],
+    ["1b", "Botão de retorno", "Um toque curto no botão do joystick 2, de qualquer pose, traz os 4 servos de volta à Figura 1", "☐"],
     ["2", "Faixa de cada junta", "Cada junta percorre ANG_MIN..ANG_MAX sem encostar em nada", "☐"],
     ["3", "Alcance horizontal", "≈186 mm do centro da base com o braço estendido", "☐"],
     ["4", "Altura máxima", "≈249 mm", "☐"],

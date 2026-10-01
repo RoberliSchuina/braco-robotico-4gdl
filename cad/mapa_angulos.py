@@ -32,7 +32,7 @@ def vetor(nome):
 def escalar(nome):
     return int(re.search(nome + r"\s*=\s*(\d+)", INO).group(1))
 
-ANG_MIN, ANG_MAX, ANG_HOME = vetor("ANG_MIN"), vetor("ANG_MAX"), vetor("ANG_HOME")
+ANG_MIN, ANG_MAX, POS_REF = vetor("ANG_MIN"), vetor("ANG_MAX"), vetor("POS_REF")
 G_FECHADA = escalar("GARRA_FECHADA")
 G_ABERTA  = int(re.search(r"GARRA_ABERTA\s*=\s*(\d+)", INO).group(1))
 S4_PARALELO = 75          # gerar_pecas: alfa = 0 (dedos paralelos) é montado com o servo em 75°
@@ -79,7 +79,7 @@ def descr_cotovelo(s3):
     if s3 < 90:  return f"antebraço aberto: {90 - s3}° a mais que a perpendicular (tende a alinhar com o braço em 0°)"
     return f"antebraço dobrado sobre o braço: {s3 - 90}° além da perpendicular"
 
-mapa = {"limites": {"ANG_MIN": ANG_MIN, "ANG_MAX": ANG_MAX, "ANG_HOME": ANG_HOME,
+mapa = {"limites": {"ANG_MIN": ANG_MIN, "ANG_MAX": ANG_MAX, "POS_REF": POS_REF,
                     "GARRA_FECHADA": G_FECHADA, "GARRA_ABERTA": G_ABERTA},
         "z_ombro": round(float(Z_OMBRO), 1)}
 
@@ -88,24 +88,24 @@ mapa["base"] = [[s1, s1 - 90,
                  ("braço apontando para a frente (referência)" if s1 == 90 else
                   f"conjunto girado {abs(s1 - 90)}° para a {'esquerda' if s1 > 90 else 'direita'}"),
                  ("ANG_MIN" if s1 == ANG_MIN[0] else "ANG_MAX" if s1 == ANG_MAX[0] else
-                  "HOME" if s1 == ANG_HOME[0] else "")]
-                for s1 in [ANG_MIN[0], 45, ANG_HOME[0], 135, ANG_MAX[0]]]
+                  "REFERÊNCIA" if s1 == POS_REF[0] else "")]
+                for s1 in [ANG_MIN[0], 45, POS_REF[0], 135, ANG_MAX[0]]]
 
 # --- S2: ombro (cotovelo mantido em home)
 mapa["ombro"] = []
-for s2 in [ANG_MIN[1], 45, ANG_HOME[1], 120, 135, ANG_MAX[1]]:
-    zmin, zmax, r = envelope(s2, ANG_HOME[2])
+for s2 in [ANG_MIN[1], 45, POS_REF[1], 120, 135, ANG_MAX[1]]:
+    zmin, zmax, r = envelope(s2, POS_REF[2])
     nota = ("ANG_MIN" if s2 == ANG_MIN[1] else "ANG_MAX" if s2 == ANG_MAX[1] else
-            "HOME" if s2 == ANG_HOME[1] else "")
+            "REFERÊNCIA" if s2 == POS_REF[1] else "")
     if zmin < 0 and not nota: nota = "antebraço abaixo do plano da mesa"
     mapa["ombro"].append([s2, s2 - 90, descr_ombro(s2), round(zmax, 0), round(r, 0), round(zmin, 0), nota])
 
 # --- S3: cotovelo (braço na vertical)
 mapa["cotovelo"] = []
-for s3 in [20, ANG_MIN[2], 60, ANG_HOME[2], 120, ANG_MAX[2], 148]:
-    zmin, zmax, r = envelope(ANG_HOME[1], s3)
+for s3 in [20, ANG_MIN[2], 60, POS_REF[2], 120, ANG_MAX[2], 148]:
+    zmin, zmax, r = envelope(POS_REF[1], s3)
     nota = ("ANG_MIN de fábrica" if s3 == ANG_MIN[2] else "ANG_MAX de fábrica" if s3 == ANG_MAX[2] else
-            "HOME" if s3 == ANG_HOME[2] else "limite físico: a palma encosta na plataforma" if s3 == 148 else
+            "REFERÊNCIA" if s3 == POS_REF[2] else "limite físico: a palma encosta na plataforma" if s3 == 148 else
             "alcance/altura máximos depois de calibrar" if s3 == 20 else "")
     mapa["cotovelo"].append([s3, descr_cotovelo(s3), round(zmax, 0), round(r, 0), round(zmin, 0), nota])
 
@@ -116,14 +116,14 @@ for s4 in [72, G_FECHADA, S4_PARALELO, 80, 90, 100, G_ABERTA]:
     nota = ("ANG_MIN de fábrica — 1° ABAIXO do toque das mandíbulas (73°, medido por verificacao.py)" if s4 == ANG_MIN[3] else
             "GARRA_FECHADA" if s4 == G_FECHADA else "GARRA_ABERTA = ANG_MAX" if s4 == G_ABERTA else
             "mandíbulas paralelas — pose de montagem do horn" if s4 == S4_PARALELO else
-            "HOME" if s4 == ANG_HOME[3] else "")
+            "REFERÊNCIA" if s4 == POS_REF[3] else "")
     mapa["garra"].append([s4, alfa, round(2 * alfa, 1), nota])
 
 json.dump(mapa, open(os.path.join(RAIZ, "cad", "mapa_angulos.json"), "w", encoding="utf-8"),
           ensure_ascii=False, indent=1)
 
 # ------------------------------------------------------------------ relatório no terminal
-print(f"Limites lidos do firmware: MIN {ANG_MIN}  MAX {ANG_MAX}  HOME {ANG_HOME}  garra {G_FECHADA}/{G_ABERTA}")
+print(f"Limites lidos do firmware: MIN {ANG_MIN}  MAX {ANG_MAX}  HOME {POS_REF}  garra {G_FECHADA}/{G_ABERTA}")
 print(f"Eixo do ombro a {Z_OMBRO:.1f} mm da mesa; cotovelo a 70 mm do ombro.\n")
 print("== S1 base ==")
 for s1, th1, d, n in mapa["base"]:

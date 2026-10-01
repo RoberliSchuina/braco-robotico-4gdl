@@ -11,7 +11,7 @@
  *    D6  -> sinal servo S3 (cotovelo)                   SW  -> D2 (gravar / reproduzir)
  *    D9  -> sinal servo S4 (garra)         JOYSTICK 2:  VRx -> A2 (garra)
  *    D13 -> LED de status (LED da placa)                VRy -> A3 (cotovelo)
- *                                                       SW  -> D4 (abrir/fechar garra; longo = home)
+ *                                                       SW  -> D4 (volta a referencia; longo = garra)
  *    Joysticks: +5V e GND do Arduino. Servos: fonte externa 5 V / 5 A (GND comum!)
  * ----------------------------------------------------------------------------
  *  CONTROLE
@@ -24,7 +24,8 @@
  *    REPRODUZINDO: percorre ciclicamente as poses gravadas (até 16).
  *  BOTÕES
  *    SW1 curto = grava a pose atual      SW1 longo (> 0,8 s) = inicia/para a reprodução
- *    SW2 curto = abre/fecha a garra      SW2 longo (> 0,8 s) = vai para a posição de repouso (home)
+ *    SW2 curto = VOLTA À POSIÇÃO DE REFERÊNCIA (POS_REF, todas as juntas em 90°)
+ *    SW2 longo (> 0,8 s) = abre/fecha a garra
  *    (garra: 74° ≈ fechada, 110° = aberta — valores nominais, calibrar; os dedos se tocam em ~72,5°)
  *    A garra é montada sob a palma, com as engrenagens de eixo vertical: com o antebraço na horizontal as
  *    mandíbulas fecham num PLANO HORIZONTAL (o braço agarra o objeto pelos lados, apoiado na mesa).
@@ -32,7 +33,7 @@
  *    cilindros e esferas em pé). Os dois têm o mesmo ângulo de toque, então nada muda aqui na troca.
  *  COMANDOS SERIAIS (115200 bps) — calibração e depuração:
  *    p  imprime posições      g  grava pose        l  limpa poses       r  reproduz/para
- *    m  manual (para)         h  home              a  abre/fecha garra  j  recalibra centro dos joysticks
+ *    m  manual (para)         h  pos. de referência a  abre/fecha garra  j  recalibra centro dos joysticks
  *    e  salva poses na EEPROM c  carrega da EEPROM v <n> velocidade máx. (1..10 °/passo)
  *    s <j> <ang>  move a junta j (0..3) para <ang> graus
  * ============================================================================
@@ -65,7 +66,19 @@ const float    VEL_JOY        = 2.0f;   // graus por passo com o joystick no fim
 //                                   base   ombro  cotovelo garra
 const uint8_t ANG_MIN[N_JUNTAS]  = {   5,    15,    40,    72 };
 const uint8_t ANG_MAX[N_JUNTAS]  = { 175,   165,   140,   110 };
-const uint8_t ANG_HOME[N_JUNTAS] = {  90,    90,    90,    90 };
+
+// POSIÇÃO DE REFERÊNCIA (pose de repouso, também chamada de "home"): é onde o braço é inicializado no
+// setup() e para onde ele volta sempre que se aperta o botão do joystick 2 (toque curto) ou se envia 'h'.
+// Todas as juntas em 90°, o meio da faixa útil de cada servo, porque:
+//   base     90° : centro do curso (5..175) -> mesmo alcance para os dois lados
+//   ombro    90° : braço na VERTICAL -> braço de alavanca ~0 e torque mínimo no servo mais carregado
+//   cotovelo 90° : antebraço perpendicular ao braço -> longe dos 148° em que a palma encosta na
+//                  plataforma e longe do fim de curso esticado
+//   garra    90° : meio curso (74..110), ~30 mm de vão -> não aperta o objeto nem fecha contra si mesma
+// É também a pose em que os horns dos servos são encaixados na montagem (manual de montagem, etapa 7):
+// mudar estes valores obriga a remontar os horns, não é só mexer no código.
+// Nesta pose o modelo mede 165 mm de altura e 119 mm de alcance horizontal (cad/mapa_angulos.json).
+const uint8_t POS_REF[N_JUNTAS]  = {  90,    90,    90,    90 };
 const uint8_t PIN_SERVO[N_JUNTAS] = { 3, 5, 6, 9 };
 const uint8_t PIN_EIXO[N_JUNTAS]  = { A0, A1, A3, A2 };   // J1-VRx, J1-VRy, J2-VRy, J2-VRx
 const int8_t  SENTIDO[N_JUNTAS]   = { 1, 1, 1, 1 };       // troque para -1 para inverter o sentido de um eixo
@@ -80,7 +93,7 @@ Servo   servo[N_JUNTAS];
 float   posAtual[N_JUNTAS];             // posição comandada (graus, com casas decimais para suavizar)
 float   alvo[N_JUNTAS];                 // posição desejada
 int     centro[N_JUNTAS];               // leitura do ADC com o joystick em repouso (calibrada na partida)
-float   velMax = 3.0f;                  // graus por passo (3 °/20 ms = 150 °/s) — usado em home / reprodução / comando s
+float   velMax = 3.0f;                  // graus por passo (3 °/20 ms = 150 °/s) — usado em referência / reprodução / comando s
 Modo    modo   = MANUAL;
 
 uint8_t poses[MAX_POSES][N_JUNTAS];
@@ -169,10 +182,14 @@ void pararReproducao() {
   Serial.println(F("Reproducao parada. Modo MANUAL."));
 }
 
-void vaiParaHome() {
+// volta todas as juntas para a posição de referência, no mesmo ritmo controlado da reprodução
+// (velMax graus por passo). limita() protege contra uma POS_REF editada fora dos limites calibrados.
+void vaiParaReferencia() {
   modo = MANUAL;
-  for (uint8_t j = 0; j < N_JUNTAS; j++) alvo[j] = ANG_HOME[j];
-  Serial.println(F("Indo para home..."));
+  for (uint8_t j = 0; j < N_JUNTAS; j++) alvo[j] = limita(POS_REF[j], ANG_MIN[j], ANG_MAX[j]);
+  Serial.print(F("Voltando para a posicao de referencia:"));
+  for (uint8_t j = 0; j < N_JUNTAS; j++) { Serial.print(' '); Serial.print((int)alvo[j]); }
+  Serial.println(F(" graus."));
 }
 
 void alternaGarra() {
@@ -223,8 +240,10 @@ void trataBotoes() {
   uint8_t e1 = leBotao(sw1), e2 = leBotao(sw2);
   if (e1 == 2)      { if (modo == REPRODUZINDO) pararReproducao(); else iniciaReproducao(); }
   else if (e1 == 1) { if (modo == REPRODUZINDO) pararReproducao(); else gravaPose(); }
-  if (e2 == 2)      vaiParaHome();
-  else if (e2 == 1) { if (modo == REPRODUZINDO) pararReproducao(); alternaGarra(); }
+  // toque curto no botão do joystick 2 = volta à posição de referência (vaiParaReferencia() já devolve
+  // o modo para MANUAL, por isso não precisa de pararReproducao() antes)
+  if (e2 == 1)      vaiParaReferencia();
+  else if (e2 == 2) { if (modo == REPRODUZINDO) pararReproducao(); alternaGarra(); }
 }
 
 // ------------------------------------------------------------ comandos seriais
@@ -239,7 +258,7 @@ void trataSerial() {
     case 'l': nPoses = 0; if (modo == REPRODUZINDO) pararReproducao(); Serial.println(F("Poses apagadas.")); break;
     case 'r': if (modo == REPRODUZINDO) pararReproducao(); else iniciaReproducao(); break;
     case 'm': if (modo == REPRODUZINDO) pararReproducao(); else Serial.println(F("Modo MANUAL (joysticks).")); break;
-    case 'h': vaiParaHome(); break;
+    case 'h': vaiParaReferencia(); break;
     case 'a': alternaGarra(); break;
     case 'j': calibraJoysticks(); break;
     case 'e': salvaEEPROM(); break;
@@ -282,9 +301,9 @@ void setup() {
   pinMode(PIN_LED, OUTPUT);
 
   for (uint8_t j = 0; j < N_JUNTAS; j++) {
-    posAtual[j] = alvo[j] = ANG_HOME[j];
+    posAtual[j] = alvo[j] = POS_REF[j];
     servo[j].attach(PIN_SERVO[j], 600, 2400);                  // dentro da faixa do SG90/MG90S (500-2400 µs); 2500 forçava o batente
-    servo[j].write(ANG_HOME[j]);
+    servo[j].write(POS_REF[j]);
     delay(150);                                                // liga os servos em sequência (pico de corrente menor)
   }
   calibraJoysticks();                                          // joysticks devem estar soltos (centro)
