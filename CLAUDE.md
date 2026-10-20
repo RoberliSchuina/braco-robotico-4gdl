@@ -11,6 +11,7 @@ Entregas: BOM, peças 3D (Tinkercad, uma por arquivo) + STL, protótipo montado,
 - [x] 2026-09-24: **segunda opção de garra** — dedos 10/11 com mandíbula em V (auto-centrante), troca direta com os dedos planos 07/08
 - [x] Montagem (`STL/montagem_completa.stl`) + renders em `imagens/` (inclui `montagem_captura.png`)
 - [x] Firmware `firmware/braco_robotico/braco_robotico.ino` (4 servos, 2 joysticks KY-023, gravar/reproduzir, serial, EEPROM)
+- [x] 2026-10-20: **revisão do firmware** (usuário: "o código gerado não está funcionando", sem sintoma). O original compilava e funcionava no UNO R3 simulado; causas reais achadas: NÃO compilava no UNO R4 (`PIN_LED` é macro da placa) e, ligado com uma alavanca inclinada, calibrava o centro errado e a junta corria sozinha até o limite. Mesmos pinos/botões/comandos/limites/EEPROM; ver "Firmware — fatos não óbvios"
 - [x] 2026-09-19: potenciômetros + botão avulso substituídos por 2 joysticks KY-023
 - [x] Esquema elétrico `imagens/esquema_eletrico.png` (eletrônica NÃO mudou na revisão de 2026-09-24)
 - [x] 2026-09-26: **dimensionamento da fonte** — `cad/verificacao_eletrica.py` + seção 8.1 do relatório; fonte passou a 5 V / 5 A (ver "Elétrica")
@@ -73,6 +74,7 @@ Armadilha de ambiente: patches via `python - <<'EOF'` (heredoc) no Git Bash às 
 - Protoboard (guia HTML): só as trilhas da direita são usadas — + = 5 V da fonte (servos), − = GND comum; 5 V do Arduino para os joysticks vai pela linha 21. Sugestão de linhas: fonte 2/3, C1 4, GND Arduino 5, S1 6/7, S2 10/11, S3 14/15, S4 18/19, J1 GND 24, J2 GND 29.
 - Pinos: servos D3/D5/D6/D9; J1: VRx→A0 (base), VRy→A1 (ombro), SW→D2; J2: VRx→A2 (garra), VRy→A3 (cotovelo), SW→D4; LED D13. `PIN_EIXO` está na ordem das juntas = {A0, A1, A3, A2}.
 - Controle **incremental** (joystick = velocidade): zona morta ±60 counts, incremento = VEL_JOY·n², `SENTIDO[]` inverte eixo. Centro calibrado no setup e pelo comando `j`.
+- **Revisão 2026-10-20**: LED = `PIN_LED_STATUS` (no UNO R4 `PIN_LED` é macro de `pins_arduino.h` → "expected unqualified-id"; não usar nomes que colidem com macros de placa). Servos escritos antes E depois do `attach` (AVR aceita antes; R4 só depois) e 500 ms de espera antes de calibrar. Calibração reprova eixo com centro fora de 512 ± 150 ou espalhamento > 40 counts → `eixoAtivo[j] = false` + aviso (3,3 V no módulo dá centro ≈ 337 e também é reprovado — de propósito). Debounce por estabilidade 25 ms; LED pisca sem `delay()` (o `delay(360)` antigo atrasava comandos seriais). Serial sem `String`: buffer de 32 bytes, executa em NL/CR ou após 100 ms de silêncio ("Nenhum final de linha"). Novos comandos `d` (diagnóstico a cada 500 ms, inclui Vcc pelo bandgap de 1,1 V só em AVR) e `?`; a ajuda é impressa na partida. Servos via `writeMicroseconds(600 + 10·graus)` = mesma escala do `write()` com resolução 0,1°. `digitalWrite(pino, número)` compila no R4 (Compat.h) — não era bug.
 - Máquina de estados só MANUAL ↔ REPRODUZINDO. SW1 curto = grava pose (máx. 16); SW1 longo = reproduz/para. **SW2 curto = volta à posição de referência (`POS_REF`); SW2 longo = abre/fecha garra (74↔110)** — invertido em 2026-10-01 a pedido do usuário ("ao apertar o botão o braço volta à posição inicial": retorno é um toque simples, a garra passou para o toque longo). EEPROM assinatura 0xB4A1.
 - `passoReproducao()` limita cada pose a ANG_MIN/MAX (pose fora da faixa congelava a reprodução).
 - Rampa: `velMax` graus por passo de 20 ms. Servo.attach(pin, **600, 2400**). Se um bloqueio atrasar > 3 períodos, `tUltimo = agora`.
@@ -94,7 +96,7 @@ Armadilha de ambiente: patches via `python - <<'EOF'` (heredoc) no Git Bash às 
 - **Capacitor não substitui corrente de fonte** (e vice-versa). C1 = 1000 µF com 0,2 V de queda guarda 0,2 mC = 2 A por 100 µs — cobre o degrau de µs/ms até a malha da fonte reagir. Cobrir 1 s de travamento exigiria ≈ 2 F. Acrescentado 100 nF cerâmico em cada servo (BOM 8).
 - Orçamento de queda: 5,0 → 4,8 V = **200 mV**. 0,5 m de 22 AWG com 2 A já gasta 106 mV → usar 20 AWG ou mais grosso no trecho fonte → protoboard. Contato de protoboard aguenta ~1 A: alimentar a trilha por dois furos (ou borne parafusado) e espalhar os servos.
 - Se o Arduino for alimentado pelo USB, afundar o barramento dos servos **não** reseta o MCU — só perde torque e dá jitter. O risco de reset só existe com o jumper da fonte no pino 5V.
-- Firmware compila em 36 % flash / 22 % RAM sem avisos; Servo usa Timer1.
+- Firmware compila em 40 % flash / 27 % RAM sem avisos (UNO); Servo usa Timer1.
 
 ## Pendências / ideias de revisão
 - Possível melhoria: rolamento 623ZZ na base, mola de retorno no ombro, Bluetooth (HC-05), cinemática inversa, gravação de trajetória contínua, trava de software para a pose "abaixo da mesa".
@@ -104,4 +106,5 @@ Armadilha de ambiente: patches via `python - <<'EOF'` (heredoc) no Git Bash às 
 - STLs: 11 malhas estanques, conferidas **depois de exportadas** (o assert em memória não pega aresta não-manifold).
 - Colisões: cotovelo × braço → primeiro contato em 160°; antebraço (palma) × plataforma → 148°; dentro de 20..140° do cotovelo e ±75° do ombro, a única interferência é a pose abaixo da mesa (antebraço × disco da base).
 - Engrenagens: interpenetração 0,0000 mm² e folga de flanco 0,190 mm em 361 posições.
-- Firmware: compila sem avisos (`arduino-cli compile --fqbn arduino:avr:uno --warnings all`), 36 % flash / 22 % RAM. arduino-cli em `C:\Program Files\Arduino CLI\`.
+- Firmware: compila sem avisos (`arduino-cli compile --fqbn arduino:avr:uno --warnings all`), 40 % flash / 27 % RAM (revisão 2026-10-20; também Nano, Mega 2560, UNO R4 Minima/WiFi). arduino-cli em `C:\Program Files\Arduino CLI\`.
+- 2026-10-20, sessão na nuvem (Linux): `arduino-builder` + `arduino-core-avr` do apt, Servo clonado de arduino-libraries/Servo, núcleo R4 = ArduinoCore-renesas + ArduinoCore-API + submódulo tinyusb + `gcc-arm-none-eabi`. Teste funcional no simavr (`libsimavr-dev`): bancada em C injeta ADC/botões/serial e mede os pulsos de D3/D5/D6/D9. Armadilha: o simavr reaplica o pull-up a cada escrita em PORTD — botão simulado só funciona via `AVR_IOCTL_IOPORT_SET_EXTERNAL`.

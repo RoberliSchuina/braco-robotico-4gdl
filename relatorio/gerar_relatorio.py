@@ -465,20 +465,22 @@ P("Fiação: o orçamento de queda de tensão é de apenas 200 mV (5,0 V da font
 
 # ================================================================== 9
 H("9. Firmware (Arduino IDE)", 1)
-P("Arquivo: firmware/braco_robotico/braco_robotico.ino. Bibliotecas: Servo.h e EEPROM.h (nativas da IDE). Placa: Arduino UNO.", al="j")
+P("Arquivo: firmware/braco_robotico/braco_robotico.ino. Bibliotecas: Servo.h e EEPROM.h (nativas da IDE). Placa: Arduino UNO "
+  "(o mesmo código compila sem alterações para Nano, Mega 2560 e UNO R4 Minima/WiFi).", al="j")
 H("9.1 Estrutura", 2)
 B([("Configuração: ", "tabelas de pinos, limites (ANG_MIN/ANG_MAX) e posição de referência (POS_REF) por junta."),
    ("Laço de controle (50 Hz): ", "lê os 4 eixos dos joysticks; fora da zona morta (±60 counts) calcula um incremento de ângulo proporcional ao quadrado da deflexão (até VEL_JOY = 2 °/passo = 100 °/s), soma ao alvo da junta dentro dos limites e aproxima a posição atual do alvo a no máximo velMax graus por passo (rampa de velocidade)."),
    ("Máquina de estados: ", "MANUAL (joysticks) ↔ REPRODUZINDO (percorre as poses gravadas com pausa de 0,5 s em cada uma). Ao parar a reprodução o alvo assume a posição atual, e os joysticks continuam de onde o braço parou, sem saltos."),
-   ("Botões dos joysticks: ", "SW1 curto = grava pose (LED pisca 3×), SW1 longo ≥ 0,8 s = inicia/para reprodução; SW2 curto = volta à posição de referência (POS_REF, 90° em todas as juntas), SW2 longo = abre/fecha a garra. Debounce por tempo; estrutura Botao reutilizada para os dois."),
-   ("Serial: ", "comandos de uma letra para calibração e depuração (p, g, l, r, m, h, a, j, e, c, v<n>, s <junta> <ângulo>); 'j' recalibra o centro dos joysticks."),
+   ("Botões dos joysticks: ", "SW1 curto = grava pose (LED pisca 3×), SW1 longo ≥ 0,8 s = inicia/para reprodução; SW2 curto = volta à posição de referência (POS_REF, 90° em todas as juntas), SW2 longo = abre/fecha a garra. Debounce por estabilidade (o contato precisa ficar 25 ms sem mudar); estrutura Botao reutilizada para os dois."),
+   ("Proteção na partida: ", "o centro de cada eixo é medido com os joysticks soltos; o eixo cujo centro fica fora de 512 ± 150 counts ou cujas leituras oscilam mais de 40 counts (alavanca inclinada ao ligar, fio solto ou trocado, módulo sem +5V/GND) é desativado e avisado no Monitor Serial, em vez de levar a junta sozinha até o limite."),
+   ("Serial: ", "comandos de uma letra para calibração e depuração (p, g, l, r, m, h, a, j, e, c, d, ?, v<n>, s <junta> <ângulo>); 'j' recalibra o centro dos joysticks e 'd' liga o diagnóstico (leitura crua de cada eixo, estado dos botões e tensão da placa a cada 0,5 s). A leitura não bloqueia o laço de controle e aceita qualquer opção de fim de linha do Monitor Serial."),
    ("EEPROM: ", "poses salvas com assinatura 0xB4A1 e carregadas automaticamente na partida.")])
 H("9.2 Fluxo de execução", 2)
-N(["setup(): inicializa serial, botões e LED; anexa os servos um a um (150 ms entre eles) já na posição de referência; calibra o centro dos 4 eixos (16 leituras, joysticks soltos); carrega poses da EEPROM.",
-   "loop(): trata serial e botões a cada iteração; a cada 20 ms executa o passo do modo atual (leJoysticks + avancaParaAlvo, ou passoReproducao) e atualiza o LED.",
-   "avancaParaAlvo(): para cada junta, move no máximo velMax graus, satura nos limites e escreve nos servos."])
+N(["setup(): inicializa serial, botões e LED; escreve a posição de referência em cada servo antes do attach (o primeiro pulso já sai nela) e anexa os servos um a um (150 ms entre eles); espera 0,5 s para os servos chegarem; calibra e confere o centro dos 4 eixos (16 leituras, joysticks soltos); carrega poses da EEPROM e imprime a lista de comandos.",
+   "loop(): trata serial e botões a cada iteração; a cada 20 ms executa o passo do modo atual (leJoysticks + avancaParaAlvo, ou passoReproducao), atualiza o LED (sem delay) e, com o diagnóstico ligado, imprime as leituras.",
+   "avancaParaAlvo(): para cada junta, move no máximo velMax graus, satura nos limites e escreve nos servos em microssegundos (600 µs + 10 µs/grau, resolução de 0,1°)."])
 H("9.3 Testes e calibração", 2)
-N(["Sem as peças montadas, carregar o firmware e usar 's <j> <ang>' para verificar o sentido e a faixa de cada servo.",
+N(["Sem as peças montadas, carregar o firmware e usar 's <j> <ang>' para verificar o sentido e a faixa de cada servo. Se algo não responder, ligar o diagnóstico ('d'): cada eixo deve ler ≈ 512 parado e ir de ≈ 0 a ≈ 1023 ao mexer, cada botão deve aparecer 'apertado' ao ser pressionado, e a tensão da placa não deve cair quando os servos se movem (se cair, os servos estão sendo alimentados pelo Arduino).",
    "Montar e ajustar ANG_MIN/ANG_MAX de cada junta. O firmware sai com o cotovelo limitado a 40..140° (simétrico, porque o sentido do servo só se conhece agora). Cotovelo: descobrir com 's 2 <ang>' em qual sentido o antebraço dobra sobre o braço; desse lado NÃO passar de 145° (a palma encosta na parede da plataforma a 148°, medido por varredura booleana); do lado 'esticado' pode-se abrir até 20°, ganhando alcance. Ombro: com o ombro além de ≈ 135° e o cotovelo dobrado, o antebraço desce abaixo do plano da mesa e toca o disco da base — evitar a combinação ou reduzir ANG_MAX[1] para 135.",
    "Calibrar a garra: com o horn montado a 75° (dedos paralelos, vão de 4 mm), reduzir o ângulo de 1 em 1 grau ('s 3 74', 's 3 73'...) até as mandíbulas encostarem; anotar esse ângulo em ANG_MIN[3] e usar ≈ 2° acima dele em GARRA_FECHADA (nunca abaixo: o servo fica em travamento). 's 3 110' deve abrir ≈ 57 mm na raiz das mandíbulas.",
    "Verificar o sentido de cada eixo do joystick (inclinar para a direita deve girar a base para a direita etc.); inverter pelo vetor SENTIDO[] se necessário.",

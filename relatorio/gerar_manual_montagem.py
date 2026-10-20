@@ -207,7 +207,7 @@ tabela(["#", "Fixador", "Qtd.", "Onde"],
 P(f"Custo estimado dos fixadores: R$ {custo_total():.0f}.", sz=9, i=True)
 P("Eletrônica:", b=True, sz=10.5)
 tabela(["Item", "Qtd.", "Observação"], [
-    ["Arduino UNO R3", "1", "Qualquer clone serve; o firmware usa 36 % da flash"],
+    ["Arduino UNO R3", "1", "Qualquer clone serve; o firmware usa 40 % da flash (também roda em Nano, Mega e UNO R4)"],
     ["Micro servo MG90S (ou SG90)", "4", "MG90S tem engrenagem metálica e rolamento; mesmo torque a 5 V"],
     ["Módulo joystick KY-023", "2", "Com os 5 pinos (GND, +5V, VRx, VRy, SW)"],
     ["Fonte chaveada 5 V / 5 A", "1", "3 A já atende (pico normal 1,85 A); 5 A é margem"],
@@ -514,8 +514,10 @@ H("5. Firmware", 1)
 N(["Abra firmware/braco_robotico/braco_robotico.ino na Arduino IDE.",
    "Ferramentas → Placa: Arduino UNO. Ferramentas → Porta: a porta COM do seu Arduino.",
    "A biblioteca Servo já vem com a IDE; não é preciso instalar nada.",
-   "Carregue (Ctrl+U). O sketch ocupa 36 % da flash e 22 % da RAM.",
-   "Abra o Monitor Serial em 115200 bauds."])
+   "Carregue (Ctrl+U). O sketch ocupa 40 % da flash e 27 % da RAM do UNO. O mesmo arquivo compila sem "
+   "alterações para Nano, Mega 2560 e UNO R4 Minima/WiFi: basta escolher a placa certa no passo 2.",
+   "Abra o Monitor Serial em 115200 bauds (qualquer opção de fim de linha serve). Caracteres estranhos na tela "
+   "querem dizer velocidade errada no Monitor Serial, não defeito no braço."])
 P("Comandos do Monitor Serial:", b=True, sz=10.5)
 tabela(["Comando", "O que faz"], [
     ["p", "Imprime as posições atuais das 4 juntas"],
@@ -530,6 +532,9 @@ tabela(["Comando", "O que faz"], [
     ["e", "Salva as poses na EEPROM"],
     ["c", "Carrega as poses da EEPROM"],
     ["v<1 a 10>", "Ajusta a velocidade máxima em graus por passo de 20 ms (padrão 3 = 150 °/s)"],
+    ["d", "Liga/desliga o diagnóstico: a cada 0,5 s mostra a leitura crua de cada eixo / o centro calibrado, "
+          "o estado dos botões e a tensão da placa (Vcc)"],
+    ["?", "Lista os comandos"],
 ], [4.2, 11.8])
 P("Controles no joystick:", b=True, sz=10.5)
 tabela(["Ação", "Resultado"], [
@@ -562,7 +567,10 @@ tabela(["Junta", "Limites de fábrica", "Limite físico medido no modelo"], [
 H("6.1 Centro dos joysticks", 2)
 N(["Solte as alavancas e não encoste nelas.",
    "Mande o comando 'j'. O firmware lê 16 amostras de cada eixo e adota a média como centro.",
-   "Confirme com 'p' e mexendo de leve: nenhuma junta pode andar sozinha com a alavanca solta."])
+   "Confirme com 'p' e mexendo de leve: nenhuma junta pode andar sozinha com a alavanca solta.",
+   "Se na partida aparecer 'ATENCAO: eixo ... Eixo desativado', aquele eixo leu longe de 512 com a alavanca "
+   "solta (alavanca inclinada ao ligar, fio solto ou trocado, joystick sem +5V/GND) e foi desligado por "
+   "segurança. Corrija, solte as alavancas e mande 'j'. Com 'd' você vê a leitura de cada eixo ao vivo."])
 
 H("6.2 Sentido de cada eixo", 2)
 N(["Empurre cada alavanca para um lado e veja se a junta vai para o lado esperado.",
@@ -734,6 +742,18 @@ tabela(["Sintoma", "Causa provável", "O que fazer"], [
     ["A reprodução congela numa pose",
      "Pose gravada fora dos limites atuais",
      "Já tratado no firmware (a pose é limitada); se persistir, apagar com 'l' e regravar."],
+    ["O Monitor Serial mostra caracteres estranhos",
+     "Velocidade do Monitor Serial diferente da do firmware",
+     "Selecionar 115200 bauds no canto do Monitor Serial."],
+    ["Uma junta não responde ao joystick; na partida aparece 'Eixo desativado'",
+     "O eixo leu longe de 512 na calibração: alavanca inclinada, fio solto/trocado ou módulo sem +5V/GND",
+     "Soltar as alavancas e mandar 'j'; com 'd', conferir ≈ 512 parado e ≈ 0 a ≈ 1023 mexendo."],
+    ["Erro de compilação 'expected unqualified-id' apontando PIN_LED",
+     "Versão antiga do firmware compilada para UNO R4 (a placa já define PIN_LED)",
+     "Usar o firmware atual: a constante agora se chama PIN_LED_STATUS."],
+    ["Servos tremem ao mover e o 'Vcc' do diagnóstico cai abaixo de ≈ 4,5 V",
+     "Servos puxando corrente do Arduino (fonte externa mal ligada)",
+     "Servos só na fonte externa; GND da fonte ligado ao GND do Arduino."],
     ["O Arduino reinicia sozinho",
      "Fonte ligada no pino 5V junto com o USB, ou queda de tensão",
      "Usar uma alimentação só; reforçar o fio da fonte para 20 AWG."],
