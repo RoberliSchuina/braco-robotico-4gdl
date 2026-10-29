@@ -24,6 +24,7 @@ Entregas: BOM, peças 3D (Tinkercad, uma por arquivo) + STL, protótipo montado,
 - [x] `cad/verificacao.py`: varreduras de colisão, engrenagens, envelope e torque (rodar depois de qualquer mudança de cota)
 - [ ] Importar cada STL em um projeto separado no Tinkercad e exportar de lá — passo manual
 - [ ] Preencher nome do aluno/professor na capa do relatório; abrir no Word e aceitar "atualizar campos" (sumário)
+- [x] 2026-10-29: **sketch de testes de bancada** `firmware/teste_braco_29.10/teste_braco_29.10.ino` (ver "Sketch de testes de bancada")
 - [ ] Imprimir, montar, calibrar `ANG_MIN/ANG_MAX` e registrar os testes na seção 9.3
 
 ## Regra: sincronizar com o GitHub
@@ -97,6 +98,13 @@ Armadilha de ambiente: patches via `python - <<'EOF'` (heredoc) no Git Bash às 
 - Orçamento de queda: 5,0 → 4,8 V = **200 mV**. 0,5 m de 22 AWG com 2 A já gasta 106 mV → usar 20 AWG ou mais grosso no trecho fonte → protoboard. Contato de protoboard aguenta ~1 A: alimentar a trilha por dois furos (ou borne parafusado) e espalhar os servos.
 - Se o Arduino for alimentado pelo USB, afundar o barramento dos servos **não** reseta o MCU — só perde torque e dá jitter. O risco de reset só existe com o jumper da fonte no pino 5V.
 - Firmware compila em 40 % flash / 27 % RAM sem avisos (UNO); Servo usa Timer1.
+
+## Sketch de testes de bancada (`firmware/teste_braco_29.10/`, 2026-10-29)
+- Programa auxiliar, **não é o firmware**: exercita os 4 servos e os 2 joysticks na mesma ligação e com a mesma escala de pulso (600..2400 µs). 52 % flash / 27 % RAM, compila sem avisos no UNO.
+- Ao ligar **nenhum servo recebe pulso** (nada se move sozinho numa montagem meio pronta). Dois caminhos: serial a 115200 (um servo por vez — ângulo absoluto, passo de 1°, `t` automático 90→min→max→90, `v` varredura, `vel`, `livre` para liberar 0..180 ao medir fim de curso) ou `j` para o modo joystick (`j 124` liga só os servos da lista).
+- `limite` marca a posição atual como fim de curso e `limites` imprime as linhas de ANG_MIN/ANG_MAX prontas para colar no firmware — é a ferramenta do passo de calibração pendente da seção 9.3.
+- Fonte de desenvolvimento em `Ambiente de testes/` (**fora do git**): `teste_braco_29.10.ino` é idêntico a `teste_servos/teste_servos.ino`; `braco_robotico_teste1/` é a versão anterior do mesmo programa.
+- Nome de pasta com ponto (`teste_braco_29.10`) é aceito pelo arduino-cli e pela IDE — confirmado por compilação.
 
 ## Pendências / ideias de revisão
 - Possível melhoria: rolamento 623ZZ na base, mola de retorno no ombro, Bluetooth (HC-05), cinemática inversa, gravação de trajetória contínua, trava de software para a pose "abaixo da mesa".
