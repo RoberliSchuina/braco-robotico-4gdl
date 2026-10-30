@@ -8,7 +8,7 @@
  *  Bibliotecas: Servo.h e EEPROM.h (já vêm com a Arduino IDE — não é preciso instalar nada)
  * ----------------------------------------------------------------------------
  *  MAPA DE PINOS
- *    D3  -> sinal servo S1 (base)          JOYSTICK 1:  VRx -> A0 (base)
+ *    D3  -> sinal servo S1 (base) DESLIGADO JOYSTICK 1: VRx -> A0 (base, inerte: ver JUNTA_LIGADA)
  *    D5  -> sinal servo S2 (ombro)                      VRy -> A1 (ombro)
  *    D6  -> sinal servo S3 (cotovelo)                   SW  -> D2 (gravar / reproduzir)
  *    D9  -> sinal servo S4 (garra)         JOYSTICK 2:  VRx -> A2 (garra)
@@ -54,6 +54,18 @@
  *    - comandos 'd' (diagnóstico) e '?' (ajuda); a lista de comandos aparece na partida
  *    - pulso escrito em microssegundos (passo de 0,1° em vez de 1°: movimento lento sem "degraus")
  *    - reprodução protegida contra lista de poses vazia/encurtada; pose gravada com arredondamento
+ * ----------------------------------------------------------------------------
+ *  REVISÃO 2026-10-29 — OPERAR O BRAÇO COM UMA JUNTA DESLIGADA
+ *    O servo S1 (base) está com defeito, então esta versão sai com a BASE DESLIGADA e o braço é
+ *    operado pelos joysticks com as outras três juntas (ombro, cotovelo e garra), sem nenhuma outra
+ *    mudança de ligação, de limites ou de formato da EEPROM.
+ *    Quem manda é o vetor JUNTA_LIGADA[] (um bool por junta, logo abaixo da configuração):
+ *      - a junta desligada NÃO recebe attach() nem pulso nenhum — o pino fica em repouso, o servo
+ *        defeituoso não zumbe nem puxa corrente de travamento e nada se move sozinho;
+ *      - o eixo do joystick que a comandava fica inerte (J1-VRx/A0 no caso da base);
+ *      - 'p' e 'd' mostram a junta como DESLIGADA e os comandos que a moveriam avisam;
+ *      - a reprodução e a volta à referência seguem funcionando com as juntas restantes.
+ *    PARA RELIGAR depois de trocar o servo: JUNTA_LIGADA[0] = true (e recalibrar o horn da base em 90°).
  * ============================================================================
  */
 #include <Servo.h>
@@ -112,6 +124,14 @@ const char*   NOME_EIXO[N_JUNTAS] = { "A0 (J1-VRx)", "A1 (J1-VRy)", "A3 (J2-VRy)
 const uint8_t GARRA = 3;
 const uint8_t GARRA_FECHADA = 74, GARRA_ABERTA = 110;   // 74 ≈ 2 mm de vão; 110 ≈ 57 mm. Calibrar (seção 9.3)
 
+// JUNTAS EM USO — false = junta desligada (servo com defeito, ausente ou ainda não montado).
+// A junta desligada não recebe attach() nem pulso: o pino de sinal fica em repouso (INPUT), o servo não
+// zumbe nem trava, o eixo do joystick dela fica inerte e as outras juntas funcionam normalmente.
+// 2026-10-29: a BASE (S1 em D3, eixo A0) está desligada por defeito no servo. Trocado o servo, volte
+// este valor para true, monte o horn com a junta em 90° e refaça a calibração de ANG_MIN/ANG_MAX.
+//                                    base   ombro  cotovelo garra
+const bool JUNTA_LIGADA[N_JUNTAS] = { false,  true,   true,   true };
+
 // ------------------------------------------------------------ tipos e estado
 // (todos os tipos vêm antes da primeira função: a Arduino IDE gera os protótipos no topo do arquivo)
 enum Modo : uint8_t { MANUAL, REPRODUZINDO };
@@ -154,9 +174,22 @@ uint32_t tDiagnostico = 0;
 static float limita(float v, float lo, float hi) { return v < lo ? lo : (v > hi ? hi : v); }
 
 // graus (com fração) -> microssegundos; mesma escala do Servo.write() com attach(pino, 600, 2400)
+// Junta desligada: nenhum pulso sai (o objeto Servo nem foi anexado ao pino no setup).
 void escreveServo(uint8_t j) {
+  if (!JUNTA_LIGADA[j]) return;
   float us = PULSO_MIN_US + posAtual[j] * ((PULSO_MAX_US - PULSO_MIN_US) / 180.0f);
   servo[j].writeMicroseconds((int)(us + 0.5f));
+}
+
+// lista as juntas desligadas (aviso na partida e na ajuda, para não parecer defeito de montagem)
+void avisaJuntasDesligadas() {
+  for (uint8_t j = 0; j < N_JUNTAS; j++) {
+    if (JUNTA_LIGADA[j]) continue;
+    Serial.print(F("JUNTA DESLIGADA: ")); Serial.print(NOME[j]);
+    Serial.print(F(" (servo em D")); Serial.print(PIN_SERVO[j]);
+    Serial.print(F(", eixo ")); Serial.print(NOME_EIXO[j]);
+    Serial.println(F(") - sem pulso; as outras juntas funcionam normalmente."));
+  }
 }
 
 void aplicaServos() {
@@ -183,6 +216,11 @@ void calibraJoysticks() {
   uint8_t reprovados = 0;
   Serial.print(F("Centro dos joysticks:"));
   for (uint8_t j = 0; j < N_JUNTAS; j++) {
+    if (!JUNTA_LIGADA[j]) {                 // junta desligada: não há o que calibrar nem o que reprovar
+      centro[j] = 512; eixoAtivo[j] = false;
+      Serial.print(F(" --"));
+      continue;
+    }
     long soma = 0; int menor = 1023, maior = 0;
     for (uint8_t k = 0; k < 16; k++) {
       int v = analogRead(PIN_EIXO[j]);
@@ -212,8 +250,8 @@ void calibraJoysticks() {
 // controle incremental: deflexão do joystick -> incremento de ângulo por passo
 void leJoysticks() {
   for (uint8_t j = 0; j < N_JUNTAS; j++) {
-    if (!eixoAtivo[j]) continue;
-    int d = analogRead(PIN_EIXO[j]) - centro[j];                       // ~-512..+511 em torno do centro
+    if (!JUNTA_LIGADA[j] || !eixoAtivo[j]) continue;                    // junta desligada / eixo reprovado
+    int d = analogRead(PIN_EIXO[j]) - centro[j];                     // ~-512..+511 em torno do centro
     int ad = d < 0 ? -d : d;
     if (ad < ZONA_MORTA) continue;                                     // dentro da zona morta: não move
     float n = (ad - ZONA_MORTA) / (512.0f - ZONA_MORTA);               // 0..1
@@ -227,7 +265,9 @@ void imprimePosicoes() {
   Serial.print(F("modo=")); Serial.print(modo == MANUAL ? F("MANUAL") : F("REPRODUZINDO"));
   Serial.print(F(" poses=")); Serial.print(nPoses);
   for (uint8_t j = 0; j < N_JUNTAS; j++) {
-    Serial.print(F("  ")); Serial.print(NOME[j]); Serial.print('='); Serial.print((int)(posAtual[j] + 0.5f));
+    Serial.print(F("  ")); Serial.print(NOME[j]); Serial.print('=');
+    if (JUNTA_LIGADA[j]) Serial.print((int)(posAtual[j] + 0.5f));
+    else                 Serial.print(F("DESLIGADA"));
   }
   Serial.println();
 }
@@ -239,6 +279,7 @@ void imprimeAjuda() {
   Serial.println(F("  e  salva na EEPROM   c  carrega da EEPROM  d  diagnostico on/off ?  esta ajuda"));
   Serial.println(F("  v <1..10>  velocidade maxima (graus/20 ms)    s <junta 0..3> <angulo>  move uma junta"));
   Serial.println(F("Botoes: SW1 curto = grava | SW1 longo = reproduz/para | SW2 curto = referencia | SW2 longo = garra"));
+  avisaJuntasDesligadas();
 }
 
 // tensão de alimentação do próprio Arduino, medida contra a referência interna de 1,1 V (±10 %).
@@ -269,9 +310,10 @@ void imprimeDiagnostico() {
   Serial.print(F("diag:"));
   for (uint8_t j = 0; j < N_JUNTAS; j++) {
     Serial.print(' '); Serial.print(NOME[j]); Serial.print('['); Serial.print(NOME_EIXO[j][0]); Serial.print(NOME_EIXO[j][1]);
-    Serial.print(F("]=")); Serial.print(analogRead(PIN_EIXO[j]));
+    Serial.print(F("]=")); Serial.print(analogRead(PIN_EIXO[j]));   // o eixo continua sendo lido: serve de teste
     Serial.print('/'); Serial.print(centro[j]);
-    if (!eixoAtivo[j]) Serial.print(F("(OFF)"));
+    if (!JUNTA_LIGADA[j])   Serial.print(F("(DESLIGADA)"));
+    else if (!eixoAtivo[j]) Serial.print(F("(OFF)"));
   }
   Serial.print(F("  SW1=")); Serial.print(digitalRead(PIN_SW1) == LOW ? F("apertado") : F("solto"));
   Serial.print(F(" SW2=")); Serial.print(digitalRead(PIN_SW2) == LOW ? F("apertado") : F("solto"));
@@ -325,7 +367,8 @@ void vaiParaReferencia() {
 }
 
 void alternaGarra() {
-  if (modo == REPRODUZINDO) pararReproducao();                  // senão a reprodução sobrescreve o alvo
+  if (!JUNTA_LIGADA[GARRA]) { Serial.println(F("Garra desligada (JUNTA_LIGADA).")); return; }
+  if (modo == REPRODUZINDO) pararReproducao();                // senão a reprodução sobrescreve o alvo
   bool aberta = alvo[GARRA] > (GARRA_FECHADA + GARRA_ABERTA) / 2;
   alvo[GARRA] = aberta ? GARRA_FECHADA : GARRA_ABERTA;
   Serial.println(aberta ? F("Garra: fechando") : F("Garra: abrindo"));
@@ -423,6 +466,10 @@ void executaComando() {
       break;
     case 's':                                                  // s <junta> <angulo>
       if (leInteiro(p, a) && leInteiro(p, b) && a >= 0 && a < N_JUNTAS && b >= 0 && b <= 180) {
+        if (!JUNTA_LIGADA[a]) {
+          Serial.print(NOME[a]); Serial.println(F(": junta DESLIGADA (JUNTA_LIGADA) - comando ignorado."));
+          break;
+        }
         if (modo == REPRODUZINDO) pararReproducao();
         alvo[a] = limita(b, ANG_MIN[a], ANG_MAX[a]);
         Serial.print(NOME[a]); Serial.print(F(" -> ")); Serial.print((int)alvo[a]);
@@ -475,11 +522,13 @@ void setup() {
   Serial.println(F("\nBraco robotico 4 GDL (joysticks) - iniciando..."));
   for (uint8_t j = 0; j < N_JUNTAS; j++) {
     posAtual[j] = alvo[j] = limita(POS_REF[j], ANG_MIN[j], ANG_MAX[j]);
+    if (!JUNTA_LIGADA[j]) continue;                            // junta desligada: sem attach, o pino fica em repouso
     escreveServo(j);                                           // AVR: o 1º pulso já sai na referência
     servo[j].attach(PIN_SERVO[j], PULSO_MIN_US, PULSO_MAX_US);
     escreveServo(j);                                           // outras placas só aceitam a escrita após o attach
     delay(150);                                                // liga os servos em sequência (pico de corrente menor)
   }
+  avisaJuntasDesligadas();
   delay(500);                                                  // espera os servos chegarem antes de ler os joysticks
   calibraJoysticks();                                          // joysticks devem estar soltos (centro)
   carregaEEPROM();
