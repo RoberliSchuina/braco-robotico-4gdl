@@ -1,0 +1,49 @@
+{
+ "parametros": {
+  "eixo_s1": [
+   150.0,
+   70.0
+  ],
+  "setor_s1_graus": 85.0,
+  "alcance_mm": 186.0,
+  "vc288_janela": [
+   45.5,
+   26.5
+  ],
+  "painel_inclinacao": 30.0
+ },
+ "chapa": {
+  "largura": 300.0,
+  "profundidade": 260.0,
+  "espessura": 6.0,
+  "massa_g": 556.7,
+  "pe_altura": 15.0
+ },
+ "tombamento": {
+  "borda_apoio_mm": 45.0,
+  "casos": {
+   "0": {
+    "massa_total_g": 809.3,
+    "com_r_mm": -52.5
+   },
+   "15": {
+    "massa_total_g": 824.3,
+    "com_r_mm": -48.3
+   },
+   "20": {
+    "massa_total_g": 829.3,
+    "com_r_mm": -46.9
+   },
+   "50": {
+    "massa_total_g": 859.3,
+    "com_r_mm": -39.0
+   }
+  }
+ },
+ "setor_livre_ok": true,
+ "acrilico": {
+  "furo_borda_min_mm": 23.3,
+  "regra_2t_mm": 12.0,
+  "flecha_mm": 0.109
+ }
+}

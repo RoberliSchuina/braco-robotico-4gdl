@@ -149,6 +149,103 @@ print(f"\n   contato de protoboard (1 ponto, ~30 mOhm) com 2,0 A: "
       f"{0.030*2.0*1000:.0f} mV e {0.030*2.0**2:.2f} W dissipados no contato")
 print("   >> alimentar a trilha + da protoboard por UM unico ponto e o elo mais fraco.")
 
+# ---------------------------------------------------------------- 5b. caminho de potencia
+# Acrescentado com a chapa de apoio (cad/base_suporte.py): o barramento deixou de ser
+# "fonte -> protoboard" e virou uma cadeia de conectores. Cada contato custa queda, e o
+# orcamento inteiro e de 200 mV. O DSN-VC288 instalado no painel mede justamente a ponta
+# dessa cadeia, entao aqui calculamos o que ele deve mostrar.
+print("\n== 5. caminho de potencia da base (conectores + medidor DSN-VC288) ==")
+
+def R_cabo(metros, awg_ohm_m):
+    return 2 * metros * awg_ohm_m          # ida + volta
+
+# Resistencias tipicas (Ohm). Valores de contato sao ordem de grandeza medida, nao datasheet.
+R_JACK      = 0.020    # jack P4 de painel (DC-022B), par de contatos
+R_CHAVE     = 0.020    # chave gangorra KCD1-101
+R_FUS_LAMINA= 0.010    # fusivel automotivo (lamina) 3 A + porta-fusivel de linha
+R_FUS_VIDRO = 0.040    # fusivel de vidro 5x20 3 A + porta-fusivel: 4x pior
+R_SHUNT     = 0.0075   # shunt interno do DSN-VC288 (versao 10 A), na linha NEGATIVA
+R_WAGO      = 0.003    # por conexao na WAGO 221 (alavanca)
+R_PROTO     = 0.030    # um contato de mola de protoboard
+R_TRILHO    = 0.010    # percurso ao longo do trilho de alimentacao da protoboard
+L_FONTE     = 1.2      # cabo de saida da propria fonte, ate o plug P4
+L_WAGO_PROTO= 0.25     # WAGO -> trilho da protoboard
+N_ALIM      = 2        # pontos de alimentacao por trilho (cada um e um contato em paralelo)
+
+I_tot = pior = max(i for n, i in cenarios if not n.startswith("G"))
+I_srv = I_tot / 4.0
+
+for nome_awg, awg in (("18 AWG", 0.0209), ("20 AWG", 0.0333)):
+    tronco = [
+        (f"cabo da propria fonte ({L_FONTE*100:.0f} cm, {nome_awg})", R_cabo(L_FONTE, awg)),
+        ("jack P4 de painel",                       R_JACK),
+        ("chave gangorra",                          R_CHAVE),
+        ("fusivel de lamina 3 A",                   R_FUS_LAMINA),
+        ("shunt do DSN-VC288",                      R_SHUNT),
+        ("WAGO 221 (+5 V e GND)",                   4 * R_WAGO),
+        (f"WAGO -> protoboard ({L_WAGO_PROTO*100:.0f} cm, 20 AWG) /{N_ALIM}",
+                                                    R_cabo(L_WAGO_PROTO, 0.0333) / N_ALIM),
+        (f"contato de entrada do trilho (x2 trilhos) /{N_ALIM}",
+                                                    2 * R_PROTO / N_ALIM),
+        ("trilhos da protoboard",                   2 * R_TRILHO),
+    ]
+    ramo = [
+        ("contatos do jumper no trilho e na coluna", 4 * R_PROTO),
+        ("jumper 10 cm 22 AWG",                      R_cabo(0.10, 0.0530)),
+        ("pinos do extensor na protoboard",          2 * R_PROTO),
+        ("extensor 30 cm 26 AWG",                    R_cabo(0.30, 0.1339)),
+        ("rabicho do servo 25 cm 28 AWG",            R_cabo(0.25, 0.2129)),
+    ]
+    Rt = sum(r for _, r in tronco)
+    Rr = sum(r for _, r in ramo)
+    dV = Rt * I_tot + Rr * I_srv
+    print(f"\n   -- cabo da fonte em {nome_awg}, {N_ALIM} pontos de alimentacao por trilho --")
+    print(f"   {'trecho':44s} {'R (mOhm)':>9s} {'queda':>8s}")
+    for n, r in tronco:
+        print(f"   {n:44s} {r*1000:8.1f} {r*I_tot*1000:6.0f} mV   (tronco, {I_tot:.2f} A)")
+    for n, r in ramo:
+        print(f"   {n:44s} {r*1000:8.1f} {r*I_srv*1000:6.0f} mV   (ramo,   {I_srv:.2f} A)")
+    print(f"   {'TOTAL ate o pino do servo':44s} {'':8s} {dV*1000:6.0f} mV"
+          f"  -> servo recebe {V_NOM - dV:.2f} V")
+    print(f"   {'(orcamento)':44s} {'':8s} {(V_NOM-V_MIN_SRV)*1000:6.0f} mV"
+          f"  -> minimo do datasheet {V_MIN_SRV:.2f} V")
+
+print(f"\n   Fusivel: de vidro 5x20 no lugar do de lamina custa "
+      f"{(R_FUS_VIDRO-R_FUS_LAMINA)*I_tot*1000:.0f} mV a mais ({I_tot:.2f} A) "
+      f"-> usar fusivel de LAMINA.")
+print(f"   Shunt do medidor: {R_SHUNT*I_tot*1000:.0f} mV a {I_tot:.2f} A "
+      f"({100*R_SHUNT*I_tot/(V_NOM-V_MIN_SRV):.0f} % do orcamento) e "
+      f"{R_SHUNT*I_tot**2*1000:.0f} mW dissipados. Custo aceitavel pela medicao em tempo real.")
+print(f"   Alimentar o trilho por 1 ponto em vez de {N_ALIM}: "
+      f"+{(2*R_PROTO/1 - 2*R_PROTO/N_ALIM)*I_tot*1000:.0f} mV e "
+      f"{R_PROTO*I_tot**2:.2f} W num unico contato de mola.")
+# ---- o que o medidor deve mostrar (criterio de aceitacao da secao 9.3)
+Rt18 = (R_cabo(L_FONTE, 0.0209) + R_JACK + R_CHAVE + R_FUS_LAMINA + R_SHUNT + 4 * R_WAGO
+        + R_cabo(L_WAGO_PROTO, 0.0333) / N_ALIM + 2 * R_PROTO / N_ALIM + 2 * R_TRILHO)
+Rr = (6 * R_PROTO + R_cabo(0.10, 0.0530) + R_cabo(0.30, 0.1339) + R_cabo(0.25, 0.2129))
+print("\n   Leitura esperada no DSN-VC288 (tensao medida no trilho da protoboard,")
+print("   ou seja ANTES do ramo de cada servo; cabo da fonte em 18 AWG):")
+print(f"   {'cenario':44s} {'A':>6s} {'V no trilho':>12s} {'V no servo':>11s}")
+for _n, _I in cenarios:
+    _vt = V_NOM - Rt18 * _I
+    _vs = _vt - Rr * _I / 4.0
+    _al = "" if _vs >= V_MIN_SRV else "  <- abaixo de 4,8 V"
+    print(f"   {_n[:44]:44s} {_I:6.2f} {_vt:11.2f} V {_vs:10.2f} V{_al}")
+print("   Leitura de A muito acima da tabela = servo travado contra batente.")
+print("   Leitura de V abaixo da tabela = perda na fiacao; siga a ordem de ataque abaixo.")
+
+print("\n   >> O termo DOMINANTE e o cabo de saida da propria fonte, que nao esta no")
+print("      projeto e nao se mede sem instrumento. Por isso o DSN-VC288 ganha o painel:")
+print("      sem ele, uma queda de barramento aparece como 'servo fraco' e se perde tempo")
+print("      procurando defeito no firmware ou no servo.")
+print("   >> Ordem de ataque se o medidor mostrar menos de 4,8 V em movimento:")
+print("      1) encurtar o cabo da fonte (ou trocar por fonte com borne);")
+print("      2) fusivel de lamina no lugar do de vidro;")
+print("      3) terceiro ponto de alimentacao em cada trilho;")
+print("      4) barramento soldado em placa ilhada, tirando os servos da protoboard")
+print("         (economiza os ~{:.0f} mV dos contatos de mola).".format(
+      (2*R_PROTO/N_ALIM)*I_tot*1000 + 6*R_PROTO*I_srv*1000))
+
 # ---------------------------------------------------------------- 6. veredito
 print("\n" + "=" * 78)
 pior_normal = max(i for n, i in cenarios if not n.startswith("G"))

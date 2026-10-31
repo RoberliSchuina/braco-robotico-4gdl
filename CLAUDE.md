@@ -26,6 +26,9 @@ Entregas: BOM, peças 3D (Tinkercad, uma por arquivo) + STL, protótipo montado,
 - [ ] Preencher nome do aluno/professor na capa do relatório; abrir no Word e aceitar "atualizar campos" (sumário)
 - [x] 2026-10-29: **sketch de testes de bancada** `firmware/teste_braco_29.10/teste_braco_29.10.ino` (ver "Sketch de testes de bancada")
 - [x] 2026-10-29: **`JUNTA_LIGADA[]` no firmware** — servo S1 (base) com defeito; o braço opera com 3 juntas (ver "Firmware — fatos não óbvios"). Religar quando o servo for trocado
+- [x] 2026-10-31: **base de apoio em acrílico** `cad/base_suporte.py` -> `cad/corte_base_acrilico.dxf`/`.svg` (corte a laser) + seção 5 nova em `verificacao_eletrica.py`; ver "Base de apoio"
+- [ ] Medir o DSN-VC288 recebido, ajustar `VC288_JANELA` e regerar ANTES de mandar cortar
+- [ ] Regerar esquema elétrico, guia HTML, BOM, relatório e manual com a base (medidor, chave, fusível, WAGO, 2 pontos de alimentação por trilho)
 - [ ] Imprimir, montar, calibrar `ANG_MIN/ANG_MAX` e registrar os testes na seção 9.3
 
 ## Regra: sincronizar com o GitHub
@@ -36,7 +39,8 @@ Toda alteração em arquivos deste diretório (fonte ou regenerados) deve termin
 pip install trimesh manifold3d shapely numpy matplotlib python-docx
 python cad/gerar_pecas.py        # ~3 min (renders são a parte lenta) -> STL/, imagens/, cad/pecas_info.json
 python cad/verificacao.py        # ~4 min: colisões, engrenagens, envelope, torque
-python cad/verificacao_eletrica.py   # ~1 s: consumo, fonte, capacitor, queda nos cabos
+python cad/verificacao_eletrica.py   # ~1 s: consumo, fonte, capacitor, queda, caminho de potência
+python cad/base_suporte.py       # ~20 s: chapa de acrílico -> DXF/SVG de corte + verificação
 python cad/mapa_angulos.py       # ~1 min: ângulo de cada servo -> pose/altura/alcance -> cad/mapa_angulos.json
 python cad/gerar_esquema.py      # -> imagens/esquema_eletrico.png
 python relatorio/gerar_relatorio.py
@@ -107,6 +111,74 @@ Armadilha de ambiente: patches via `python - <<'EOF'` (heredoc) no Git Bash às 
 - `limite` marca a posição atual como fim de curso e `limites` imprime as linhas de ANG_MIN/ANG_MAX prontas para colar no firmware — é a ferramenta do passo de calibração pendente da seção 9.3.
 - Fonte de desenvolvimento em `Ambiente de testes/` (**fora do git**): `teste_braco_29.10.ino` é idêntico a `teste_servos/teste_servos.ino`; `braco_robotico_teste1/` é a versão anterior do mesmo programa.
 - Nome de pasta com ponto (`teste_braco_29.10`) é aceito pelo arduino-cli e pela IDE — confirmado por compilação.
+
+## Base de apoio (chapa de acrílico, 2026-10-31)
+Pedido do usuário: base que suporte o braço, com a protoboard colada, conexões organizadas para
+servos e fonte, e um DSN-VC288 medindo tensão e corrente em tempo real. Material escolhido por
+ele: **acrílico**. Conexão dos servos escolhida por ele: **sem solda** (protoboard reforçada).
+
+- **Chapa 300 × 260 × 6 mm de PMMA (557 g), cortada a LASER**, não furada à mão — acrílico trinca
+  na broca. `cad/base_suporte.py` gera `corte_base_acrilico.dxf` (R12) e `.svg`, camadas CORTE e
+  GRAVACAO. Eixo de S1 a **70 mm da borda da frente**, centrado na largura.
+- **Chapa ELEVADA sobre 4 espaçadores de 15 mm**: toda a fiação de potência passa por baixo. Não é
+  estética — o cabo de S1 sai pela lateral do disco, dentro do setor de giro, e precisa descer ali
+  mesmo (rasgo `PASSA_CABO` em (203, 70)); volta pelo `PASSA_TRAS` em (265, 145).
+- **ZONA PROIBIDA**: setor de ±85° e raio 186 mm à frente do eixo de S1. Nada de componente ali
+  porque **a garra desce 28 mm abaixo do plano da base** nas poses extremas. Como S1 nunca passa de
+  ±85°, tudo atrás da linha do eixo é inalcançável — daí a faixa de eletrônica em y >= 130.
+  `base_suporte.verifica()` testa a interseção de cada componente com o setor; é o teste a rodar
+  depois de mover qualquer coisa no layout.
+- **Tombamento resolvido**: com a chapa e a eletrônica atrás do eixo, o CoM do conjunto fica
+  **31 a 53 mm ATRÁS do eixo de S1** com 0 a 50 g na garra (massa total 809–859 g) — ele nunca sai
+  do apoio. A "tábua de fixação OBRIGATÓRIA" da revisão de viabilidade passa a ser dispensável:
+  bastam 4 pés de borracha. Antes, sem chapa, tombava com 15 g (CoM a 45 mm contra apoio de 55).
+- **Regra do acrílico: furo a >= 2 × espessura da borda** (12 mm aqui). Foi ela que ditou o painel
+  de **170 × 75** (não 150 × 60), os pés em (25, 25) em vez de (20, 20), o raio de canto 6 e a
+  eliminação dos furos de clipe do medidor. `verifica()` mede a menor distância furo→borda (22,9 mm).
+- **Painel do medidor é peça de acrílico separada**, inclinada **30°** (projeção 37,5 mm: cabe nos
+  260 mm), sustentada por 2 suportes impressos; traz janela do DSN-VC288, chave gangorra e jack P4.
+  O fusível é de **linha (rabicho)**, não de painel — ver "queda" abaixo.
+- **Armadilhas de CAD já corrigidas, não reintroduzir**: (1) `slot()` precisa ser LineString
+  engrossada — engrossar um retângulo soma a largura duas vezes e o rasgo sai 24 × 20 em vez de
+  24 × 10; (2) `separa_circulos()` precisa testar **caixa quadrada E área**, não só perímetro: um
+  rasgo em estádio passava no teste de perímetro e a laser cortaria um furo Ø24 no lugar do rasgo.
+  Conferir sempre relendo o DXF gerado (20 círculos: 19 × Ø3,4 + 1 × Ø8).
+
+### DSN-VC288 — ligação (fatos não óbvios)
+- Versão de 10 A tem **shunt interno de 7,5 mΩ na linha NEGATIVA**. Logo o **GND do Arduino tem de
+  entrar do lado da CARGA**, nunca no negativo da fonte: senão a corrente desvia do shunt, a leitura
+  erra e corrente de servo passa pelas trilhas do Arduino.
+- Fio fino **vermelho** (alimentação do display, 4,5–30 V) no **+ do jack**, antes da queda — o
+  barramento cai abaixo de 4,8 V e o mínimo do módulo é 4,5 V. Fio fino **amarelo** (medição de
+  tensão) no **+5 V do trilho**, depois da fiação. Fio fino **preto SEM LIGAÇÃO** (modo
+  autoalimentado): ligá-lo ao negativo da fonte pode curto-circuitar o shunt, dependendo do lote.
+- Se o amperímetro ler 0 com carga conhecida, **inverter os dois fios grossos**.
+- **Nenhuma fonte publica o recorte de painel** e as medidas externas divergem entre vendedores
+  (48×29×22 num anúncio, 47×28×16 noutro) — mesma situação dos furos do KY-023. `VC288_JANELA`
+  é parâmetro: **medir o módulo e regerar antes de cortar** (acrílico errado não tem volta).
+- Resolução típica 0,1 V / 0,01 A, ±1 %. Se o módulo for de 0,1 V, o critério de 4,8 V da seção 9.3
+  fica no limite da resolução — **o multímetro continua necessário para aquele ensaio**.
+
+### Queda de tensão com a base (seção 5 de `verificacao_eletrica.py`)
+- O barramento deixou de ser "fonte → protoboard" e virou cadeia de conectores. Total do ponto de
+  regulação da fonte até o pino do servo: **503 mV (cabo da fonte em 18 AWG) a 558 mV (20 AWG)**,
+  contra um orçamento de 200 mV. O servo recebe ≈ **4,50 V** no pior caso normal (1,85 A).
+- **Termo dominante: o cabo de saída da própria fonte** (93–148 mV), que não está no projeto.
+- Tabela de leitura esperada no medidor por cenário (A e V) está no script — é o critério de
+  aceitação da seção 9.3. Repouso 4,92 V / 0,47 A; reprodução 4 eixos + 50 g: 4,67 V / 1,85 A.
+- **Fusível de LÂMINA (automotivo) 3 A, não de vidro 5×20**: o de vidro custa 55 mV a mais.
+- Shunt do medidor: 14 mV (7 % do orçamento) e 26 mW — custo aceitável pela medição em tempo real.
+- **Sem solda (escolha do usuário)**: alimentar cada trilho da protoboard por **2 pontos** (não 1 —
+  um ponto só custa +55 mV e 0,10 W num único contato de mola) e espalhar os servos. Ordem de
+  ataque se o medidor acusar < 4,8 V em movimento: encurtar o cabo da fonte → fusível de lâmina →
+  3º ponto de alimentação → barramento soldado em placa ilhada (economiza ~138 mV).
+
+### Conectores escolhidos
+Jack P4 fêmea de painel com rosca (aproveita a fonte com plug P4); 2 × **WAGO 221-415** (alavanca,
+32 A, aceita flexível — a série 2273 só aceita rígido, não usar) para distribuir +5 V e GND;
+chave gangorra KCD1-101; porta-fusível de linha + fusível de lâmina 3 A; fio 20 AWG no tronco
+(22 AWG já gasta metade do orçamento); 4 extensores de servo de 300 mm para **nunca desplugar o
+conector do próprio servo**; espiral organizador + abraçadeiras nos rasgos da chapa.
 
 ## Pendências / ideias de revisão
 - Possível melhoria: rolamento 623ZZ na base, mola de retorno no ombro, Bluetooth (HC-05), cinemática inversa, gravação de trajetória contínua, trava de software para a pose "abaixo da mesa".
