@@ -24,9 +24,14 @@ Entregas: BOM, peças 3D (Tinkercad, uma por arquivo) + STL, protótipo montado,
 - [x] `cad/verificacao.py`: varreduras de colisão, engrenagens, envelope e torque (rodar depois de qualquer mudança de cota)
 - [ ] Importar cada STL em um projeto separado no Tinkercad e exportar de lá — passo manual
 - [ ] Preencher nome do aluno/professor na capa do relatório; abrir no Word e aceitar "atualizar campos" (sumário)
-- [x] 2026-10-29: **sketch de testes de bancada** `firmware/teste_braco_29.10/teste_braco_29.10.ino` (ver "Sketch de testes de bancada")
+- [x] 2026-10-29: **sketch de testes de bancada** (fundido no firmware único em 2026-11-09 e apagado)
 - [x] 2026-10-29: **`JUNTA_LIGADA[]` no firmware** — servo S1 (base) com defeito; o braço opera com 3 juntas (ver "Firmware — fatos não óbvios"). Religar quando o servo for trocado
 - [x] 2026-10-31: **base de apoio em acrílico** `cad/base_suporte.py` -> `cad/corte_base_acrilico.dxf`/`.svg` (corte a laser) + seção 5 nova em `verificacao_eletrica.py`; ver "Base de apoio"
+- [x] 2026-11-07: **LED RGB de estados** no sketch de bancada + guia HTML; ver "LED RGB de estados"
+- [x] 2026-11-07: **repinagem dos sinais** para D2..D10 em sequência (servos D2-D5, botões D6/D7, LED D8-D10) nos 2 firmwares, guia HTML, esquema, relatório e manual; ver "Firmware — fatos não óbvios"
+- [x] 2026-11-07: **toque no SW do joystick liga o modo joystick** (recurso depois fundido no firmware único)
+- [x] 2026-11-09: **FIRMWARE ÚNICO** — `firmware/braco_robotico/braco_robotico.ino` passou a ser o único programa do projeto (fusão com o sketch de bancada). `firmware/teste_braco_29.10/` e `Ambiente de testes/` foram APAGADOS; ver "Firmware único (fusão de 2026-11-09)"
+- [ ] O usuário vai acrescentar fotos e vídeos do projeto em funcionamento
 - [ ] Medir o DSN-VC288 recebido, ajustar `VC288_JANELA` e regerar ANTES de mandar cortar
 - [ ] Regerar esquema elétrico, guia HTML, BOM, relatório e manual com a base (medidor, chave, fusível, WAGO, 2 pontos de alimentação por trilho)
 - [ ] Imprimir, montar, calibrar `ANG_MIN/ANG_MAX` e registrar os testes na seção 9.3
@@ -78,7 +83,9 @@ Armadilha de ambiente: patches via `python - <<'EOF'` (heredoc) no Git Bash às 
 
 ## Firmware — fatos não óbvios
 - Protoboard (guia HTML): só as trilhas da direita são usadas — + = 5 V da fonte (servos), − = GND comum; 5 V do Arduino para os joysticks vai pela linha 21. Sugestão de linhas: fonte 2/3, C1 4, GND Arduino 5, S1 6/7, S2 10/11, S3 14/15, S4 18/19, J1 GND 24, J2 GND 29.
-- Pinos: servos D3/D5/D6/D9; J1: VRx→A0 (base), VRy→A1 (ombro), SW→D2; J2: VRx→A2 (garra), VRy→A3 (cotovelo), SW→D4; LED D13. `PIN_EIXO` está na ordem das juntas = {A0, A1, A3, A2}.
+- **Pinos (revisão de 2026-11-07, pedido do usuário "organizar melhor e evitar falhas ao conectar")**: servos S1..S4 em **D2 D3 D4 D5**, botões SW1/SW2 em **D6 D7**, LED RGB R/G/B em **D8 D9 D10** — os 9 sinais ocupam **D2..D10 em sequência**, sem furo vago (3º ao 8º furo do bloco 0–7 contando do RX←0, mais os 3 primeiros do bloco 8–13). Eixos inalterados: J1 VRx→A0 (base), VRy→A1 (ombro); J2 VRx→A2 (garra), VRy→A3 (cotovelo). D11/D12/D13 livres (D13 = LED da placa). `PIN_EIXO` está na ordem das juntas = {A0, A1, A3, A2}.
+  **Os dois firmwares usam a mesma pinagem** — trocar de sketch não exige refiar. Pinagem antiga (até 2026-11-06): servos D3/D5/D6/D9, SW D2/D4, LED D10/D11/D12.
+  Armadilha ao renomear: a troca é uma **permutação**, então `sed` em cadeia se atropela (D3→D2 e depois D2→D6 transforma servo em botão) — usar uma única passada de regex com dicionário, e **proteger o base64** da imagem dentro do HTML. Cuidado também com "PWM de D9/D10", que é fato do **Timer1 do AVR** (OC1A/OC1B) e não pinagem nossa: não pode ser renomeado.
 - Controle **incremental** (joystick = velocidade): zona morta ±60 counts, incremento = VEL_JOY·n², `SENTIDO[]` inverte eixo. Centro calibrado no setup e pelo comando `j`.
 - **Revisão 2026-10-20**: LED = `PIN_LED_STATUS` (no UNO R4 `PIN_LED` é macro de `pins_arduino.h` → "expected unqualified-id"; não usar nomes que colidem com macros de placa). Servos escritos antes E depois do `attach` (AVR aceita antes; R4 só depois) e 500 ms de espera antes de calibrar. Calibração reprova eixo com centro fora de 512 ± 150 ou espalhamento > 40 counts → `eixoAtivo[j] = false` + aviso (3,3 V no módulo dá centro ≈ 337 e também é reprovado — de propósito). Debounce por estabilidade 25 ms; LED pisca sem `delay()` (o `delay(360)` antigo atrasava comandos seriais). Serial sem `String`: buffer de 32 bytes, executa em NL/CR ou após 100 ms de silêncio ("Nenhum final de linha"). Novos comandos `d` (diagnóstico a cada 500 ms, inclui Vcc pelo bandgap de 1,1 V só em AVR) e `?`; a ajuda é impressa na partida. Servos via `writeMicroseconds(600 + 10·graus)` = mesma escala do `write()` com resolução 0,1°. `digitalWrite(pino, número)` compila no R4 (Compat.h) — não era bug.
 - Máquina de estados só MANUAL ↔ REPRODUZINDO. SW1 curto = grava pose (máx. 16); SW1 longo = reproduz/para. **SW2 curto = volta à posição de referência (`POS_REF`); SW2 longo = abre/fecha garra (74↔110)** — invertido em 2026-10-01 a pedido do usuário ("ao apertar o botão o braço volta à posição inicial": retorno é um toque simples, a garra passou para o toque longo). EEPROM assinatura 0xB4A1.
@@ -105,12 +112,40 @@ Armadilha de ambiente: patches via `python - <<'EOF'` (heredoc) no Git Bash às 
 - Se o Arduino for alimentado pelo USB, afundar o barramento dos servos **não** reseta o MCU — só perde torque e dá jitter. O risco de reset só existe com o jumper da fonte no pino 5V.
 - Firmware compila em 40 % flash / 27 % RAM sem avisos (UNO); Servo usa Timer1.
 
-## Sketch de testes de bancada (`firmware/teste_braco_29.10/`, 2026-10-29)
-- Programa auxiliar, **não é o firmware**: exercita os 4 servos e os 2 joysticks na mesma ligação e com a mesma escala de pulso (600..2400 µs). 52 % flash / 27 % RAM, compila sem avisos no UNO.
-- Ao ligar **nenhum servo recebe pulso** (nada se move sozinho numa montagem meio pronta). Dois caminhos: serial a 115200 (um servo por vez — ângulo absoluto, passo de 1°, `t` automático 90→min→max→90, `v` varredura, `vel`, `livre` para liberar 0..180 ao medir fim de curso) ou `j` para o modo joystick (`j 124` liga só os servos da lista).
-- `limite` marca a posição atual como fim de curso e `limites` imprime as linhas de ANG_MIN/ANG_MAX prontas para colar no firmware — é a ferramenta do passo de calibração pendente da seção 9.3.
-- Fonte de desenvolvimento em `Ambiente de testes/` (**fora do git**): `teste_braco_29.10.ino` é idêntico a `teste_servos/teste_servos.ino`; `braco_robotico_teste1/` é a versão anterior do mesmo programa.
-- Nome de pasta com ponto (`teste_braco_29.10`) é aceito pelo arduino-cli e pela IDE — confirmado por compilação.
+## Firmware único (fusão de 2026-11-09)
+Pedido do usuário: "utilize o arquivo de referência (teste_braco_09.11) para a criação do firmware
+definitivo; apague as outras versões". Ele escolheu, entre as opções oferecidas, **juntar os dois num só**.
+O arquivo de referência era o sketch de bancada apenas RENOMEADO (byte a byte igual ao de 07/11).
+
+- **`firmware/braco_robotico/braco_robotico.ino` é o único .ino do projeto.** Base = firmware de
+  operação; recebeu do sketch de bancada: LED RGB de estados, `x`/`liga` (soltar e religar os servos),
+  `teste <j>` / `varre <j>`, `livre`, `limite <j>` / `limites`, `led` e o atalho de botão.
+  61 % flash / 32 % RAM no UNO, sem avisos (também Nano e Mega). **Pinos, POS_REF, limites, semântica
+  dos botões e formato da EEPROM (0xB4A1) não mudaram** — poses antigas continuam válidas.
+- **APAGADOS**: `firmware/teste_braco_29.10/` (com `teste_braco_09.11.ino`) e `Ambiente de testes/`
+  inteira (que estava fora do git, incluindo `braco_robotico_teste1/`). O sketch de bancada continua
+  recuperável pelo histórico: `git show 0af3f1f:firmware/teste_braco_29.10/teste_braco_29.10.ino`.
+- **Armadilha do parser**: o firmware lê comandos pela PRIMEIRA LETRA (`l` = limpa poses). Com as
+  palavras novas, `limite`/`limites`/`livre` seriam lidas como `l` e **apagariam as poses**. Por isso
+  `executaPalavra()` é testada ANTES do `switch` de letra. Mesma razão de `teste`/`varre` não serem
+  `t`/`v`: `v` já é a velocidade máxima.
+- **`ANG_MIN`/`ANG_MAX` deixaram de ser `const`** (o comando `limite` escreve neles em tempo real).
+  Custa 8 bytes de RAM e é o que permite calibrar a seção 9.3 sem trocar de programa.
+- **`anexado[N_JUNTAS]`** (novo) separa "junta desligada por defeito" (`JUNTA_LIGADA`, compile-time) de
+  "servo solto agora" (`x`/`liga`, runtime). `escreveServo()` exige os dois.
+- **`faixaLivre`** + `limInf()`/`limSup()` substituem o uso direto de ANG_MIN/ANG_MAX em
+  `avancaParaAlvo()`, `leJoysticks()` e no comando `s`. `passoReproducao()` continua usando os limites
+  REAIS de propósito: reproduzir uma sequência com a faixa livre ligada seria perigoso.
+- **Atalho de botão**: com algum eixo reprovado na calibração (`algumEixoReprovado()`), qualquer toque
+  recalibra (= `j`) e os botões **não** executam suas funções normais; fora desse estado nada mudou.
+  Foi a tradução do "botão = comando j" do sketch de bancada, onde `j` ligava o modo joystick.
+  `esperaBotoesSoltos()` veio junto: o SW do KY-023 fica **no próprio eixo**, apertar inclina a alavanca
+  e a calibração guardaria um centro deslocado (ou reprovaria o eixo pela regra 512 ± 150).
+- Estados do LED no firmware único (prioridade de cima para baixo): vermelho 3 Hz = eixo reprovado >
+  branco (lampejo 2 s) = servos soltos > magenta = faixa LIVRE > ciano 1,7 Hz = `teste`/`varre` >
+  azul 1,7 Hz = REPRODUZINDO > amarelo = MANUAL com junta desligada > verde = MANUAL. Qualquer cor fixa
+  pisca a 5 Hz enquanto há movimento. Amarelo fixo também aparece durante `calibraJoysticks()`.
+  Lampejos: branco = pose/EEPROM/botão, amarelo = ângulo limitado ou `limite` marcado, vermelho = recusa.
 
 ## Base de apoio (chapa de acrílico, 2026-10-31)
 Pedido do usuário: base que suporte o braço, com a protoboard colada, conexões organizadas para
@@ -179,6 +214,43 @@ Jack P4 fêmea de painel com rosca (aproveita a fonte com plug P4); 2 × **WAGO 
 chave gangorra KCD1-101; porta-fusível de linha + fusível de lâmina 3 A; fio 20 AWG no tronco
 (22 AWG já gasta metade do orçamento); 4 extensores de servo de 300 mm para **nunca desplugar o
 conector do próprio servo**; espiral organizador + abraçadeiras nos rasgos da chapa.
+
+## LED RGB de estados (2026-11-07)
+Pedido do usuário: "referência luminosa para o operador mostrando os estados do braço". Nasceu no sketch
+de bancada; desde a fusão de 2026-11-09 vive no firmware único (ver "Firmware único"), e a tabela de
+estados válida é a de lá — esta seção guarda os fatos de hardware, que não mudaram.
+
+- **Pinos D8 (R), D9 (G), D10 (B)** desde a repinagem de 2026-11-07 (eram D10/D11/D12), perna comum
+  no GND. **Sem `analogWrite`**: a Servo ocupa o Timer1, que é o gerador de PWM de **D9 e D10** —
+  exatamente os canais G e B. Em `digitalWrite` não há conflito; liga/desliga dá 7 cores e cor sempre
+  igual. Não é limitação sentida: cor = modo, piscar = atividade.
+- **Nomes `PIN_RGB_R/G/B`** de propósito: `PIN_LED`, `LEDR`, `LEDG`, `LEDB` são macros de placa
+  (mesma armadilha de 2026-10-20 no UNO R4). `LED_ANODO_COMUM` (bool) inverte os 3 pinos; sai `false`
+  (catodo comum, caso do KY-016). Em ânodo comum a perna comum vai no **5V do Arduino (a21)**, nunca
+  na trilha dos servos.
+- **Prioridade dos estados** (`estadoLed()`, o primeiro que casa vence): eixo reprovado na calibração
+  (vermelho 3 Hz) > faixa LIVRE (magenta) > sequência t/v (ciano 1,7 Hz) > joystick (verde) >
+  serial (azul) > nada energizado (branco, lampejo a cada 2 s). Qualquer cor fixa **pisca a 5 Hz
+  enquanto `pos != alvo`** — e volta a ficar fixa quando a junta chega ao limite, o que serve de
+  indicação de fim de curso. Lampejos de evento (`lampeja()`, 0,15–0,6 s, prioridade máxima):
+  amarelo = pedido limitado pela faixa ou `limite` marcado; vermelho = comando recusado;
+  branco = botão SW lido. Amarelo **fixo** durante `calibraJoysticks()` ("não toque nas alavancas").
+- Comando serial novo `led` (repete o teste de fiação e imprime a legenda); está na lista `consulta`,
+  então não derruba o modo joystick. `imprimeEstado()` ganhou a linha "LED: ...". 58 % flash / 29 %
+  RAM no UNO, sem avisos (também Nano e Mega; **R4 não verificado** — o core não está instalado nesta
+  máquina). Armadilha: `? cor : PRETO` com `cor` em `uint8_t` dá aviso `-Wextra`; usar `(uint8_t)PRETO`.
+- **Corrente**: 220 Ω por cor → ≈ 13 mA (vermelho) e ≈ 9 mA (verde/azul), limite de 20 mA por pino do
+  UNO; branco ≈ 31 mA saindo dos pinos, não da fonte dos servos. Branco rosado → 330–470 Ω no vermelho.
+  KY-016 já tem resistor embutido (não acrescentar).
+- **Atualizados na repinagem de 2026-11-07**: `cad/gerar_esquema.py` + `imagens/esquema_eletrico.png`
+  (regerado, já com o LED, e **reembutido** no HTML — o base64 do guia tem de ser trocado à mão por
+  `scratchpad/reembute.py`), `relatorio/gerar_relatorio.py` e `gerar_manual_montagem.py` (pinagem +
+  3 linhas do LED nas tabelas de pinos; os 3 .docx foram regerados). As cópias de desenvolvimento
+  em `Ambiente de testes/` (fora do git) foram sincronizadas — e depois apagadas na fusão de 2026-11-09.
+- **Ainda não atualizados**: a BOM do relatório não lista o LED RGB nem os 3 resistores de 220 Ω, e a
+  seção 8.1 não contabiliza os ≈ 31 mA do LED (saem dos pinos do MCU, não da fonte dos servos — por isso
+  não mudam o dimensionamento da fonte, mas vale citar). O mapa de estados do LED está implementado e
+  documentado no guia HTML e na seção "Firmware único".
 
 ## Pendências / ideias de revisão
 - Possível melhoria: rolamento 623ZZ na base, mola de retorno no ombro, Bluetooth (HC-05), cinemática inversa, gravação de trajetória contínua, trava de software para a pose "abaixo da mesa".

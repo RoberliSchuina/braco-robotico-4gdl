@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """gerar_esquema.py — desenha o esquema elétrico de ligação (imagens/esquema_eletrico.png).
-Arduino UNO + 4 servos (fonte externa) + 2 módulos joystick KY-023 (alimentados pelo Arduino)."""
+Arduino UNO + 4 servos (fonte externa) + 2 módulos joystick KY-023 + LED RGB de estados.
+Pinagem de sinais (07/11/2026): D2..D10 em sequência — D2..D5 servos, D6/D7 botões, D8..D10 LED."""
 import os
 import matplotlib; matplotlib.use('Agg')
 import matplotlib.pyplot as plt
@@ -11,7 +12,7 @@ SAIDA = os.path.join(RAIZ, "imagens", "esquema_eletrico.png")
 
 VERM, PRETO, LARANJA, AZUL, VERDE = "#d62728", "#222222", "#ff9900", "#1f77b4", "#2ca02c"
 fig, ax = plt.subplots(figsize=(16, 10), dpi=110)
-ax.set_xlim(0, 168); ax.set_ylim(0, 102); ax.axis('off')
+ax.set_xlim(0, 168); ax.set_ylim(-6, 102); ax.axis('off')
 
 def caixa(x, y, w, h, titulo, cor="#f2f2f2", fs=11, ty=None):
     ax.add_patch(Rectangle((x, y), w, h, fc=cor, ec="#333", lw=1.5))
@@ -24,12 +25,13 @@ def ponto(x, y, cor=PRETO): ax.add_patch(Circle((x, y), 0.7, fc=cor, ec=cor))
 
 # ---------------- Arduino UNO
 caixa(38, 22, 30, 62, "ARDUINO UNO R3", "#dfe9f5", 12)
-pinos_esq = {"5V": 80, "D2": 74, "A0": 66, "A1": 61, "A2": 50, "A3": 45, "D4": 38, "GND": 32}
-pinos_dir = {"D3": 73, "D5": 63, "D6": 53, "D9": 43}
+pinos_esq = {"5V": 80, "D6": 74, "A0": 66, "A1": 61, "A2": 50, "A3": 45, "D7": 38, "GND": 32}
+pinos_dir = {"D2": 73, "D3": 63, "D4": 53, "D5": 43, "D8": 34, "D9": 29, "D10": 24}
 for n, y in pinos_esq.items(): ax.text(39, y, n, ha='left', va='center', fontsize=9)
 for n, y in pinos_dir.items(): ax.text(67, y, n, ha='right', va='center', fontsize=9)
 ax.text(53, 27, "USB (programação)", ha='center', fontsize=8, style='italic')
 ax.text(53, 56, "LED de status: D13\n(LED da própria placa)", ha='center', fontsize=8)
+ax.text(53, 70, "sinais em D2..D10,\nsem furo vago no meio", ha='center', fontsize=7.5, style='italic', color="#555")
 
 # ---------------- barramentos
 Y_VEXT, Y_GND = 82, 10
@@ -47,7 +49,7 @@ fio([(143, 79), (149, 79)], PRETO, 3); fio([(143, 77), (149, 77)], PRETO, 3)
 ax.text(150.5, 78, "C1 1000 µF / 16 V", va='center', fontsize=7.5)
 
 # ---------------- servos
-servos = [("S1 BASE", "D3", 73), ("S2 OMBRO", "D5", 63), ("S3 COTOVELO", "D6", 53), ("S4 GARRA", "D9", 43)]
+servos = [("S1 BASE", "D2", 73), ("S2 OMBRO", "D3", 63), ("S3 COTOVELO", "D4", 53), ("S4 GARRA", "D5", 43)]
 for i, (nome, pino, ypin) in enumerate(servos):
     x, y = 100, 66 - i * 15
     caixa(x, y, 32, 11, nome, "#e2f0d9", 9)
@@ -62,9 +64,9 @@ fio([(38, 80), (36, 80), (36, 82.5), (3, 82.5), (3, 47)], LARANJA)          # tr
 ax.text(4, 84, "+5 V (Arduino)", fontsize=8, color=LARANJA)
 fio([(38, 32), (34, 32), (34, Y_GND)], PRETO); ponto(34, Y_GND)              # GND Arduino -> barramento
 joys = [  # (nome, y0, terminais direita: (rótulo, y, pino Arduino, y do pino, cor), +5V y, GND y)
-    ("JOYSTICK 1\n(KY-023)", 58, [("SW", 74, "D2", 74, VERDE), ("VRx", 66, "A0", 66, AZUL), ("VRy", 61, "A1", 61, AZUL)], 76, 68,
+    ("JOYSTICK 1\n(KY-023)", 58, [("SW", 74, "D6", 74, VERDE), ("VRx", 66, "A0", 66, AZUL), ("VRy", 61, "A1", 61, AZUL)], 76, 68,
      "base (VRx) · ombro (VRy)\nSW: grava / reproduz"),
-    ("JOYSTICK 2\n(KY-023)", 30, [("VRx", 50, "A2", 50, AZUL), ("VRy", 45, "A3", 45, AZUL), ("SW", 38, "D4", 38, VERDE)], 47, 34,
+    ("JOYSTICK 2\n(KY-023)", 30, [("VRx", 50, "A2", 50, AZUL), ("VRy", 45, "A3", 45, AZUL), ("SW", 38, "D7", 38, VERDE)], 47, 34,
      "garra (VRx) · cotovelo (VRy)\nSW: curto = pos. referência; longo = garra"),
 ]
 for nome, y0, terms, y5, yg, desc in joys:
@@ -77,13 +79,25 @@ for nome, y0, terms, y5, yg, desc in joys:
         fio([(22, yt), (38, yp)], cor)
     ax.text(14, y0 - 1.5, desc, ha='center', va='top', fontsize=6.5, style='italic')
 
+# ---------------- LED RGB de estados (R/G/B em D8/D9/D10, perna comum no GND)
+LED_R, LED_G, LED_B = "#e03131", "#2f9e44", "#1c7ed6"
+caixa(84, 12, 30, 8, "LED RGB DE ESTADOS", "#efe3f7", 9, ty=18.5)
+ax.text(99, 14.5, "220 Ω em cada cor (ou módulo KY-016, que já os traz)", ha='center', fontsize=6.5, style='italic')
+for x_ent, y_pin, cor, rot in ((88, 34, LED_R, "R"), (94, 29, LED_G, "G"), (100, 24, LED_B, "B")):
+    fio([(68, y_pin), (x_ent, 20)], cor)
+    ax.text(x_ent, 20.6, rot, ha='center', va='bottom', fontsize=7, color=cor, fontweight='bold')
+fio([(110, 12), (110, Y_GND)], PRETO); ponto(110, Y_GND)
+ax.text(111, 11.2, "perna comum (catodo)", fontsize=6.5, va='bottom')
+
 # ---------------- notas
-ax.text(2, 8, "Notas: (1) o GND da fonte externa DEVE ser ligado ao GND do Arduino (barramento comum);  (2) nunca alimente os servos pelo 5 V do Arduino/USB;\n"
+ax.text(2, 2, "Notas: (1) o GND da fonte externa DEVE ser ligado ao GND do Arduino (barramento comum);  (2) nunca alimente os servos pelo 5 V do Arduino/USB;\n"
               "(3) C1 cobre o degrau de corrente da inversão de sentido (µs a ms) até a fonte reagir — não substitui a corrente da fonte (ver 8.1 do relatório);\n"
               "      pior caso de operação 1,85 A, com os 4 servos travados 2,70 A;  (4) cabos dos servos: laranja = sinal, vermelho = VCC, marrom = GND;\n"
               "(5) os joysticks (≈ 2 mA cada) são alimentados pelo 5 V do Arduino; o botão SW vai a GND quando pressionado (usar INPUT_PULLUP);\n"
               "(6) alimente o Arduino de UMA forma só: pelo USB (programação/depuração) OU por um jumper da fonte ao pino 5V — nunca os dois ao mesmo tempo\n"
-              "     (a fonte ficaria em paralelo com o USB do computador);  (7) só há conexão elétrica onde há ponto (•); fios que apenas se cruzam não se conectam.",
+              "     (a fonte ficaria em paralelo com o USB do computador);  (7) só há conexão elétrica onde há ponto (•); fios que apenas se cruzam não se conectam;\n"
+              "(8) o LED RGB é comandado em liga/desliga (7 cores), não em PWM: a biblioteca Servo ocupa o Timer1, que é o gerador de PWM de D9 e D10 (canais G e B);\n"
+              "     ele é um sinal — vai no GND comum e nos pinos do Arduino, NUNCA no barramento +5 V dos servos, que cai a ≈ 4,5 V em movimento.",
         ha='left', va='top', fontsize=7.8)
-ax.set_title("Esquema elétrico — Braço robótico 4 GDL (Arduino UNO + 4 servos + 2 joysticks KY-023)", fontsize=13, fontweight='bold')
+ax.set_title("Esquema elétrico — Braço robótico 4 GDL (Arduino UNO + 4 servos + 2 joysticks KY-023 + LED RGB de estados)", fontsize=13, fontweight='bold')
 plt.tight_layout(); fig.savefig(SAIDA, facecolor='white'); print("OK", SAIDA)

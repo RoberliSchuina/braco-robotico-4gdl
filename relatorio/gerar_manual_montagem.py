@@ -207,7 +207,7 @@ tabela(["#", "Fixador", "Qtd.", "Onde"],
 P(f"Custo estimado dos fixadores: R$ {custo_total():.0f}.", sz=9, i=True)
 P("Eletrônica:", b=True, sz=10.5)
 tabela(["Item", "Qtd.", "Observação"], [
-    ["Arduino UNO R3", "1", "Qualquer clone serve; o firmware usa 40 % da flash (também roda em Nano, Mega e UNO R4)"],
+    ["Arduino UNO R3", "1", "Qualquer clone serve; o firmware usa 61 % da flash (também roda em Nano, Mega e UNO R4)"],
     ["Micro servo MG90S (ou SG90)", "4", "MG90S tem engrenagem metálica e rolamento; mesmo torque a 5 V"],
     ["Módulo joystick KY-023", "2", "Com os 5 pinos (GND, +5V, VRx, VRy, SW)"],
     ["Fonte chaveada 5 V / 5 A", "1", "3 A já atende (pico normal 1,85 A); 5 A é margem"],
@@ -255,7 +255,7 @@ H("2.3 Centrar os 4 servos em 90° — a etapa mais importante do manual", 2)
 P("O eixo do servo é estriado (≈ 21 dentes). Cada dente vale 17,1°; encaixar o horn um dente fora desloca todo "
   "o elo em até 8,6°. Por isso o horn NUNCA é encaixado com o servo desligado: primeiro o servo vai para 90° "
   "por software, depois o horn é encaixado na posição certa.", al="j")
-N(["Monte só o mínimo elétrico: Arduino ligado ao USB, o servo em D3, alimentado pela fonte de 5 V com o GND "
+N(["Monte só o mínimo elétrico: Arduino ligado ao USB, o servo em D2, alimentado pela fonte de 5 V com o GND "
    "comum (veja a seção 5). Um servo por vez basta.",
    "Grave o firmware definitivo (seção 6). Ao ligar, ele já leva todas as saídas para 90° — é exatamente o que "
    "precisamos.",
@@ -464,16 +464,19 @@ P("O guia furo a furo da protoboard está no arquivo Circuito_Braco_Robotico.htm
 
 H("4.1 Pinagem", 2)
 tabela(["Sinal", "Pino do Arduino", "Observação"], [
-    ["Servo S1 — base", "D3", "Fio laranja/amarelo (sinal)"],
-    ["Servo S2 — ombro", "D5", ""],
-    ["Servo S3 — cotovelo", "D6", "Precisa de extensor de 300 mm"],
-    ["Servo S4 — garra", "D9", "Precisa de extensor de 300 mm"],
+    ["Servo S1 — base", "D2", "Fio laranja/amarelo (sinal)"],
+    ["Servo S2 — ombro", "D3", ""],
+    ["Servo S3 — cotovelo", "D4", "Precisa de extensor de 300 mm"],
+    ["Servo S4 — garra", "D5", "Precisa de extensor de 300 mm"],
     ["Joystick 1 — VRx (base)", "A0", "J1 = mão esquerda"],
     ["Joystick 1 — VRy (ombro)", "A1", ""],
-    ["Joystick 1 — SW", "D2", "Entrada com pull-up interno"],
+    ["Joystick 1 — SW", "D6", "Entrada com pull-up interno"],
     ["Joystick 2 — VRx (garra)", "A2", "J2 = mão direita"],
     ["Joystick 2 — VRy (cotovelo)", "A3", ""],
-    ["Joystick 2 — SW", "D4", ""],
+    ["Joystick 2 — SW", "D7", ""],
+    ["LED RGB — vermelho (R)", "D8", "Com 220 Ω (ou módulo KY-016, que já os traz)"],
+    ["LED RGB — verde (G)", "D9", ""],
+    ["LED RGB — azul (B)", "D10", "Perna comum do LED no GND comum"],
     ["LED de estado", "D13", "LED da própria placa"],
     ["+5 V dos servos", "Fonte externa", "NÃO sai do Arduino"],
     ["+5 V dos joysticks", "5V do Arduino", "Consumo desprezível"],
@@ -514,7 +517,7 @@ H("5. Firmware", 1)
 N(["Abra firmware/braco_robotico/braco_robotico.ino na Arduino IDE.",
    "Ferramentas → Placa: Arduino UNO. Ferramentas → Porta: a porta COM do seu Arduino.",
    "A biblioteca Servo já vem com a IDE; não é preciso instalar nada.",
-   "Carregue (Ctrl+U). O sketch ocupa 40 % da flash e 27 % da RAM do UNO. O mesmo arquivo compila sem "
+   "Carregue (Ctrl+U). O sketch ocupa 61 % da flash e 32 % da RAM do UNO. O mesmo arquivo compila sem "
    "alterações para Nano, Mega 2560 e UNO R4 Minima/WiFi: basta escolher a placa certa no passo 2.",
    "Abra o Monitor Serial em 115200 bauds (qualquer opção de fim de linha serve). Caracteres estranhos na tela "
    "querem dizer velocidade errada no Monitor Serial, não defeito no braço."])
@@ -585,6 +588,7 @@ N(["Leve tudo para a referência com 'h' (ou um toque curto no botão 2).",
    "colisão mais próximo.",
    "Quando faltarem uns 5° para encostar, pare e anote o valor: esse é o seu ANG_MAX daquela junta.",
    "Repita no sentido contrário para achar ANG_MIN.",
+   "Atalho do firmware: com a junta parada no batente, envie 'limite <junta>' — ele grava o valor na memória (abaixo de 90° vira mínimo, acima vira máximo). Ao terminar as quatro juntas, 'limites' imprime as linhas de ANG_MIN[] e ANG_MAX[] já formatadas para colar no código. 'livre' libera a faixa 0..180 durante a medição (LED magenta) e 'x' solta os servos para você posicionar a junta à mão.",
    "Passe os quatro pares para os vetores ANG_MIN[] e ANG_MAX[] no firmware e recarregue.",
    "Repita o teste depois de recarregar: agora o firmware recusa qualquer comando fora da faixa."])
 caixa("DICA", "Depois de calibrado, o lado esticado do cotovelo costuma chegar a 20° e o dobrado nunca passa de "

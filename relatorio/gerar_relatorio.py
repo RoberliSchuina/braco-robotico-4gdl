@@ -169,8 +169,8 @@ P("Do ponto de vista de sistemas embarcados, o projeto é um laço de controle e
   "velocidade de cada junta para obter movimentos suaves e reduzir picos de corrente. Como o joystick retorna ao centro "
   "por mola, o comando é incremental (controle de velocidade): a deflexão do eixo define a taxa de variação do ângulo da "
   "junta, com zona morta em torno do centro e curva quadrática para precisão em movimentos finos.", al="j")
-B([("Entradas: ", "2 joysticks KY-023 — 4 eixos analógicos (A0–A3, ADC 10 bits) e 2 botões (D2, D4, pull-up interno); porta serial USB (115200 bps)."),
-   ("Saídas: ", "4 sinais PWM de servo (D3, D5, D6, D9 — biblioteca Servo.h, pulsos de 500 a 2500 µs), LED de status (D13)."),
+B([("Entradas: ", "2 joysticks KY-023 — 4 eixos analógicos (A0–A3, ADC 10 bits) e 2 botões (D6, D7, pull-up interno); porta serial USB (115200 bps). Os sinais ocupam D2 a D10 em sequência, sem furo vago no conector."),
+   ("Saídas: ", "4 sinais PWM de servo (D2, D3, D4, D5 — biblioteca Servo.h, pulsos de 500 a 2500 µs), LED RGB de estados (D8, D9, D10, em liga/desliga) e LED de status da placa (D13)."),
    ("Memória: ", "até 16 poses gravadas em RAM, com persistência opcional na EEPROM (assinatura de validação); centro de cada eixo do joystick calibrado na partida."),
    ("Segurança: ", "limites mínimo/máximo por junta em software (evitam colisão do antebraço com o braço), partida sequencial dos servos e posição de repouso na inicialização.")])
 
@@ -362,14 +362,17 @@ N(["Remover rebarbas; testar o encaixe de cada servo nos rasgos (deve entrar jus
 H("8. Projeto eletrônico", 1)
 figura(IMG("esquema_eletrico.png"), "Figura 8 — Esquema elétrico de ligação.", 16.5)
 tabela(["Sinal", "Pino Arduino", "Componente", "Observação"], [
-    ["PWM servo base (S1)", "D3", "SG90 — fio laranja", "Servo.h, 600–2400 µs"],
-    ["PWM servo ombro (S2)", "D5", "MG90S — fio laranja", ""],
-    ["PWM servo cotovelo (S3)", "D6", "MG90S — fio laranja", ""],
-    ["PWM servo garra (S4)", "D9", "SG90 — fio laranja", ""],
+    ["PWM servo base (S1)", "D2", "SG90 — fio laranja", "Servo.h, 600–2400 µs"],
+    ["PWM servo ombro (S2)", "D3", "MG90S — fio laranja", ""],
+    ["PWM servo cotovelo (S3)", "D4", "MG90S — fio laranja", ""],
+    ["PWM servo garra (S4)", "D5", "SG90 — fio laranja", ""],
     ["Joystick 1 — VRx / VRy", "A0 / A1", "KY-023 (base / ombro)", "+5 V e GND do Arduino"],
-    ["Joystick 1 — SW", "D2", "Botão do joystick (para GND)", "INPUT_PULLUP; curto = grava pose, longo = reproduz/para"],
+    ["Joystick 1 — SW", "D6", "Botão do joystick (para GND)", "INPUT_PULLUP; curto = grava pose, longo = reproduz/para"],
     ["Joystick 2 — VRx / VRy", "A2 / A3", "KY-023 (garra / cotovelo)", "+5 V e GND do Arduino"],
-    ["Joystick 2 — SW", "D4", "Botão do joystick (para GND)", "INPUT_PULLUP; curto = volta à posição de referência, longo = abre/fecha garra"],
+    ["Joystick 2 — SW", "D7", "Botão do joystick (para GND)", "INPUT_PULLUP; curto = volta à posição de referência, longo = abre/fecha garra"],
+    ["LED RGB — vermelho (R)", "D8", "LED RGB de estados (220 Ω)", "Liga/desliga; a cor indica o modo e o piscar a atividade"],
+    ["LED RGB — verde (G)", "D9", "LED RGB de estados (220 Ω)", "Sem analogWrite: a Servo ocupa o Timer1, que faz o PWM de D9/D10"],
+    ["LED RGB — azul (B)", "D10", "LED RGB de estados (220 Ω)", "Perna comum do LED no GND comum"],
     ["LED de status", "D13", "LED da placa", "Aceso = manual; piscando = reproduzindo"],
     ["+5 V servos", "—", "Fonte 5 V / 5 A + C1 1000 µF", "NUNCA pelo 5 V do Arduino"],
     ["GND", "GND", "Comum a fonte, servos, pots e Arduino", "Obrigatório"],
