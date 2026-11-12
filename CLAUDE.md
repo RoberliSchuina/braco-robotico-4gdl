@@ -31,6 +31,7 @@ Entregas: BOM, peças 3D (Tinkercad, uma por arquivo) + STL, protótipo montado,
 - [x] 2026-11-07: **repinagem dos sinais** para D2..D10 em sequência (servos D2-D5, botões D6/D7, LED D8-D10) nos 2 firmwares, guia HTML, esquema, relatório e manual; ver "Firmware — fatos não óbvios"
 - [x] 2026-11-07: **toque no SW do joystick liga o modo joystick** (recurso depois fundido no firmware único)
 - [x] 2026-11-09: **FIRMWARE ÚNICO** — `firmware/braco_robotico/braco_robotico.ino` passou a ser o único programa do projeto (fusão com o sketch de bancada). `firmware/teste_braco_29.10/` e `Ambiente de testes/` foram APAGADOS; ver "Firmware único (fusão de 2026-11-09)"
+- [x] 2026-11-11: **sketch de bancada RECONSTRUÍDO** em `firmware/teste_braco_09.11/teste_braco_09.11.ino` (pedido do usuário). O projeto volta a ter 2 .ino, de propósito: `braco_robotico.ino` é o firmware oficial e este é referência histórica do desenvolvimento do LED. Ver "Firmware único"
 - [ ] O usuário vai acrescentar fotos e vídeos do projeto em funcionamento
 - [ ] Medir o DSN-VC288 recebido, ajustar `VC288_JANELA` e regerar ANTES de mandar cortar
 - [ ] Regerar esquema elétrico, guia HTML, BOM, relatório e manual com a base (medidor, chave, fusível, WAGO, 2 pontos de alimentação por trilho)
@@ -123,8 +124,31 @@ O arquivo de referência era o sketch de bancada apenas RENOMEADO (byte a byte i
   61 % flash / 32 % RAM no UNO, sem avisos (também Nano e Mega). **Pinos, POS_REF, limites, semântica
   dos botões e formato da EEPROM (0xB4A1) não mudaram** — poses antigas continuam válidas.
 - **APAGADOS**: `firmware/teste_braco_29.10/` (com `teste_braco_09.11.ino`) e `Ambiente de testes/`
-  inteira (que estava fora do git, incluindo `braco_robotico_teste1/`). O sketch de bancada continua
-  recuperável pelo histórico: `git show 0af3f1f:firmware/teste_braco_29.10/teste_braco_29.10.ino`.
+  inteira (que estava fora do git, incluindo `braco_robotico_teste1/`).
+- **PERDA E RECONSTRUÇÃO DO SKETCH DE BANCADA (2026-11-11)** — vale ler antes de apagar qualquer coisa.
+  A versão final de 07/11 (pinagem D2..D10 + LED RGB + atalho do botão) **nunca foi commitada**: o
+  usuário a renomeou para `teste_braco_09.11.ino`, o que a tornou um arquivo **não rastreado**, e ela
+  foi apagada em 09/11 sem passar pelo índice. O que o git tinha era só:
+  1. `git show 0af3f1f:firmware/teste_braco_29.10/teste_braco_29.10.ino` — 29/10, pinagem ANTIGA
+     (servos D3/D5/D6/D9, botões D2/D4), sem LED, garra 70..120;
+  2. **blob órfão `d076b30`** (`git cat-file blob d076b30`) — a mesma, já com o ajuste de bancada do
+     usuário (garra 50..95). 495 linhas, 52 % flash. Foi a base da reconstrução.
+  **RECONSTRUÍDO** em `firmware/teste_braco_09.11/teste_braco_09.11.ino` fazendo o *replay* dos mesmos
+  scripts de patch de 07/11, na mesma ordem, sobre (2): `patch_ino.py` (LED RGB) -> correção do aviso
+  `-Wextra` (`(uint8_t)PRETO`) -> `repin.py` (D2..D10) -> `fix_ino2.py` -> `patch_botao.py`.
+  Resultado compila em **18864 bytes de flash e 604 de RAM — exatamente os números do original**, o que
+  indica binário idêntico (o tamanho da flash conta cada string `F()`). A pasta foi renomeada para
+  `teste_braco_09.11` porque a IDE do Arduino exige pasta e sketch com o mesmo nome (o original tinha
+  `teste_braco_09.11.ino` dentro de `teste_braco_29.10/`, o que faz a IDE pedir para mover).
+  **DUAS LIÇÕES**:
+  a) arquivo não rastreado (`??` no `git status`) não é protegido pelo histórico — commitar ou copiar
+     para fora ANTES de apagar;
+  b) o **cache do arduino-cli** guarda uma cópia do fonte em
+     `%LOCALAPPDATA%\arduino\sketches\<MD5 do CAMINHO do sketch>\sketch\<nome>.ino.cpp`, e tinha a
+     versão de 07/11 até 11/11. Como o hash vem do caminho, **recompilar o mesmo caminho sobrescreve
+     o cache**: ao restaurar a versão antiga em `firmware/teste_braco_29.10/` e compilá-la, destruí a
+     única cópia que restava. Se um fonte se perder, **copiar esse cache ANTES de compilar qualquer
+     coisa naquele caminho**.
 - **Armadilha do parser**: o firmware lê comandos pela PRIMEIRA LETRA (`l` = limpa poses). Com as
   palavras novas, `limite`/`limites`/`livre` seriam lidas como `l` e **apagariam as poses**. Por isso
   `executaPalavra()` é testada ANTES do `switch` de letra. Mesma razão de `teste`/`varre` não serem
