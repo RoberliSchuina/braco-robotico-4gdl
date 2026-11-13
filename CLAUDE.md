@@ -32,6 +32,7 @@ Entregas: BOM, peças 3D (Tinkercad, uma por arquivo) + STL, protótipo montado,
 - [x] 2026-11-07: **toque no SW do joystick liga o modo joystick** (recurso depois fundido no firmware único)
 - [x] 2026-11-09: **FIRMWARE ÚNICO** — `firmware/braco_robotico/braco_robotico.ino` passou a ser o único programa do projeto (fusão com o sketch de bancada). `firmware/teste_braco_29.10/` e `Ambiente de testes/` foram APAGADOS; ver "Firmware único (fusão de 2026-11-09)"
 - [x] 2026-11-11: **sketch de bancada RECONSTRUÍDO** em `firmware/teste_braco_09.11/teste_braco_09.11.ino` (pedido do usuário). O projeto volta a ter 2 .ino, de propósito: `braco_robotico.ino` é o firmware oficial e este é referência histórica do desenvolvimento do LED. Ver "Firmware único"
+- [x] 2026-11-12: **plataforma giratória para MG996R** (peça 12, NOVA, não substitui a 02) + **cálculo de carga máxima**; ver "Plataforma para MG996R"
 - [ ] O usuário vai acrescentar fotos e vídeos do projeto em funcionamento
 - [ ] Medir o DSN-VC288 recebido, ajustar `VC288_JANELA` e regerar ANTES de mandar cortar
 - [ ] Regerar esquema elétrico, guia HTML, BOM, relatório e manual com a base (medidor, chave, fusível, WAGO, 2 pontos de alimentação por trilho)
@@ -47,6 +48,8 @@ python cad/gerar_pecas.py        # ~3 min (renders são a parte lenta) -> STL/, 
 python cad/verificacao.py        # ~4 min: colisões, engrenagens, envelope, torque
 python cad/verificacao_eletrica.py   # ~1 s: consumo, fonte, capacitor, queda, caminho de potência
 python cad/base_suporte.py       # ~20 s: chapa de acrílico -> DXF/SVG de corte + verificação
+python cad/plataforma_mg996r.py  # ~40 s: peça 12 (plataforma para MG996R) -> STL + imagens/ + info.json
+python cad/carga_maxima.py       # ~1 min: carga útil por cenário de servo -> cad/carga_maxima.json
 python cad/mapa_angulos.py       # ~1 min: ângulo de cada servo -> pose/altura/alcance -> cad/mapa_angulos.json
 python cad/gerar_esquema.py      # -> imagens/esquema_eletrico.png
 python relatorio/gerar_relatorio.py
@@ -275,6 +278,64 @@ estados válida é a de lá — esta seção guarda os fatos de hardware, que n�
   seção 8.1 não contabiliza os ≈ 31 mA do LED (saem dos pinos do MCU, não da fonte dos servos — por isso
   não mudam o dimensionamento da fonte, mas vale citar). O mapa de estados do LED está implementado e
   documentado no guia HTML e na seção "Firmware único".
+
+## Plataforma para MG996R (peça 12, 2026-11-12)
+Pedido do usuário: "desenhe o arquivo stl da plataforma giratória (S2) — irei substituir por um servo
+MG996R (40 x 19 x 43 mm); não sobreponha o arquivo original". Gerada por `cad/plataforma_mg996r.py` ->
+`STL/12_plataforma_giratoria_mg996r.stl` (+ `imagens/plataforma_mg996r.png`, `cad/plataforma_mg996r_info.json`).
+A peça 02 (MG90S) continua intacta; as duas convivem.
+
+- **A cota que manda não é 40 x 19 x 43, é o quanto o corpo desce ABAIXO das abas: 26,5 mm** (MG90S:
+  15,9). Como o servo do ombro fica DENTRO da forquilha, isso empurra a parede livre e, por simetria em
+  y = 0, as chapas do braço: **Y_ELO1 vai de 18,80 para 26,75 mm** (vão interno 37,6 -> 53,5 mm).
+- Layout axial resultante (impresso pelo script): parede motriz 6 mm em y = +5,05..+11,05 (flange em
+  +11,05) | corpo do servo até y = −15,45 | parede livre 7 mm em −25,45..−18,45 (mancal Ø9,4 no corpo,
+  sem ressalto) | chapas do braço em ±26,75.
+- **Portanto esta peça NÃO monta com as chapas 03/04 atuais.** Para montar é preciso refazê-las com
+  Y_ELO1 = 26,75 (travessa L = 53,50 mm; `Y_ELO2` = 41,55) e com o bolso do horn de **25 dentes** do
+  MG996R (GAP = 15,70 mm, bolso 2,5 mm — era GAP 10,80 / bolso 2,0). O `plataforma_mg996r.py` imprime
+  esses números no fim. As peças 05/06 só mudam pelo Y_ELO2.
+- **Mantidos de propósito**: bolso do horn 'cruz' do MG90S embaixo (a base 01 serve sem alteração),
+  **eixo do ombro em z = 28** (cinemática, `mapa_angulos.py` e alcance do relatório continuam valendo),
+  mancal Ø9,4 para o munhão Ø9 e folga para as 4 colunas de encosto da base.
+- Placa deixou de ser disco Ø60: é um **retângulo arredondado** x = −22..39,5, y = −25,45..22, r = 6
+  (o disco não alcançava a parede livre, que saiu de y = −14 para −25). Ela cobre as 4 colunas de
+  encosto e todo o pé das duas paredes — nada no ar imprimindo com a placa para baixo, sem suportes.
+  61,5 x 47,5 x 42,5 mm, 29,1 cm³, **~19,8 g** (a 02 tem 15,0 g). CoM a 6,9 mm do eixo de S1.
+- **Fixação do servo: 4 x M3 passante Ø3,4 a 49,5 mm entre centros (10 mm por aba)**, cabeça do lado do
+  servo e porca no vão entre as paredes; as nervuras ficam em x = ±4..10 justamente para deixar as
+  porcas livres (as abas estão em x = −14,75 e +34,75). Sobram 2,35 mm de material entre o rasgo e cada
+  furo — não aumentar o rasgo.
+- Nervuras: duas baixas (z = 3..17,8, sob o corpo) e uma alta (z = 38,2..42,5, sobre o corpo) fechando
+  um caixote; a alta é uma **ponte de 23,5 mm**, igual à maior ponte já aceita no projeto.
+- **TODAS as cotas do MG996R estão em constantes no topo do script e são de catálogo "standard servo"**
+  (49,5 entre furos, 26,5 abaixo das abas, eixo deslocado 10 mm do centro do corpo, 2,5 + 9,7 + 4,2
+  acima). Só 40 x 19 x 43 veio do usuário. **MEDIR o servo recebido e regerar antes de imprimir** —
+  mesma disciplina do KY-023 e do DSN-VC288. O rasgo 41,4 x 20,4 já aceita o corpo "cheio" de catálogo
+  (40,7 x 19,7).
+- `verifica()` roda 11 testes (interferência com o corpo do servo, com o munhão e com a chapa livre do
+  braço; folgas; cantos apoiados; colunas cobertas; CoM) — rodar depois de qualquer mudança de cota.
+- **Ainda não feito**: chapas 03/04 novas, colisão palma x parede (o limite de 148° do cotovelo foi
+  medido contra a parede da peça 02, que era mais estreita), BOM/relatório/manual com o MG996R e
+  revisão do consumo (MG996R trava em ~2,5 A a 6 V; a fonte de 5 V/5 A ainda cobre, mas a seção 8.1
+  foi calculada com 4 micro-servos).
+
+## Carga máxima (`cad/carga_maxima.py`, 2026-11-12)
+Mesmo modelo de corpo livre de `verificacao.py` (massas reais das malhas), com as chapas
+RECONSTRUÍDAS no vão de cada cenário. A massa do MG996R **não** entra: ele fica na plataforma, abaixo
+do eixo do ombro. Resultados em `cad/carga_maxima.json`.
+
+- **Trocar só S2 (o caso do usuário): carga útil ≈ 83 g a 60 % do stall, 148 g no limite físico, em
+  QUALQUER pose** — contra 31 g (60 %) do projeto atual. O ombro deixa de ser o gargalo: **o limite
+  passa a ser o COTOVELO (MG90S, 1,8 kgf·cm)**, e por isso o número não depende mais da pose.
+- Se S3 também virasse MG996R: 266–290 g pelo torque, mas aí mandaria o **atrito da garra** —
+  S4 (SG90) dá ≈ 3,6 N por mandíbula a 49 mm do eixo do dedo, ou seja **≈ 132 g a 60 % do stall com
+  µ = 0,3** (PLA liso) e ≈ 220 g com borracha/papelão colado na mandíbula. Teto seguinte: tombamento da
+  base de acrílico, **593 g** a 178 mm do eixo de S1.
+- Estrutura não limita: o bolso do horn de S2 trabalha a **2,4 MPa** com o stall do MG996R (PLA ~40 MPa).
+- Ordem dos gargalos depois da troca de S2: cotovelo (83 g) < atrito da garra (132 g) < tombamento
+  (593 g) < estrutura. Para subir de verdade a carga é preciso trocar **S3 junto** e dar atrito às
+  mandíbulas.
 
 ## Pendências / ideias de revisão
 - Possível melhoria: rolamento 623ZZ na base, mola de retorno no ombro, Bluetooth (HC-05), cinemática inversa, gravação de trajetória contínua, trava de software para a pose "abaixo da mesa".

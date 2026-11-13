@@ -1,0 +1,36 @@
+{
+  "arquivo": "12_plataforma_giratoria_mg996r.stl",
+  "nome": "Plataforma giratória (MG996R)",
+  "funcao": "Fixa no horn de S1; forquilha do ombro para servo MG996R (parede motriz + mancal)",
+  "servo_s2": "MG996R",
+  "dimensoes_mm": [
+    61.5,
+    47.5,
+    42.5
+  ],
+  "volume_solido_cm3": 29.1,
+  "massa_estimada_g": 19.8,
+  "tempo_estimado_min": 59,
+  "triangulos": 7666,
+  "eixo_ombro_z_mm": 28.0,
+  "y_flange_mm": 11.05,
+  "y_elo1_requerido_mm": 26.75,
+  "travessa_braco_mm": 53.5,
+  "gap_horn_mm": 15.7,
+  "verificacao_ok": true,
+  "mg996r_mm": {
+    "corpo": [
+      40.0,
+      19.0,
+      43.0
+    ],
+    "abaixo_das_abas": 26.5,
+    "flange_t": 2.5,
+    "acima": 9.7,
+    "eixo": 4.2,
+    "furos_entre_centros": 49.5,
+    "furos_por_aba": 10.0,
+    "desloc_eixo": 10.0
+  },
+  "impressao": "Placa para baixo (bolso do horn na 1ª camada). Sem suportes. Nervura alta faz ponte de 23.5 mm."
+}

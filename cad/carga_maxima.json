@@ -1,0 +1,127 @@
+{
+  "criterio": "torque <= fração do stall em ombro e cotovelo",
+  "stall_kgfcm": {
+    "mg90s": 1.8,
+    "mg996r": 9.4
+  },
+  "massas_g": {
+    "sg90": 9.0,
+    "mg90s": 13.4,
+    "mg996r": 55.0
+  },
+  "raio_carga_mm": 49.0,
+  "casos": [
+    {
+      "cenario": "Projeto atual (MG90S no ombro)",
+      "pose": "alcance máximo (ombro 90°, antebraço horizontal)",
+      "th2": 90,
+      "th3": 90,
+      "eixo_critico": "ombro",
+      "carga_60": 31,
+      "carga_80": 51,
+      "carga_100": 71
+    },
+    {
+      "cenario": "Projeto atual (MG90S no ombro)",
+      "pose": "limite do firmware (ombro 75°)",
+      "th2": 75,
+      "th3": 90,
+      "eixo_critico": "ombro",
+      "carga_60": 32,
+      "carga_80": 52,
+      "carga_100": 72
+    },
+    {
+      "cenario": "Projeto atual (MG90S no ombro)",
+      "pose": "braço vertical, antebraço horizontal (recolhido)",
+      "th2": 0,
+      "th3": 90,
+      "eixo_critico": "cotovelo",
+      "carga_60": 83,
+      "carga_80": 116,
+      "carga_100": 148
+    },
+    {
+      "cenario": "MG996R no ombro, MG90S no cotovelo",
+      "pose": "alcance máximo (ombro 90°, antebraço horizontal)",
+      "th2": 90,
+      "th3": 90,
+      "eixo_critico": "cotovelo",
+      "carga_60": 83,
+      "carga_80": 115,
+      "carga_100": 148
+    },
+    {
+      "cenario": "MG996R no ombro, MG90S no cotovelo",
+      "pose": "limite do firmware (ombro 75°)",
+      "th2": 75,
+      "th3": 90,
+      "eixo_critico": "cotovelo",
+      "carga_60": 83,
+      "carga_80": 115,
+      "carga_100": 148
+    },
+    {
+      "cenario": "MG996R no ombro, MG90S no cotovelo",
+      "pose": "braço vertical, antebraço horizontal (recolhido)",
+      "th2": 0,
+      "th3": 90,
+      "eixo_critico": "cotovelo",
+      "carga_60": 83,
+      "carga_80": 115,
+      "carga_100": 148
+    },
+    {
+      "cenario": "MG996R no ombro E no cotovelo (hipótese)",
+      "pose": "alcance máximo (ombro 90°, antebraço horizontal)",
+      "th2": 90,
+      "th3": 90,
+      "eixo_critico": "ombro",
+      "carga_60": 266,
+      "carga_80": 369,
+      "carga_100": 473
+    },
+    {
+      "cenario": "MG996R no ombro E no cotovelo (hipótese)",
+      "pose": "limite do firmware (ombro 75°)",
+      "th2": 75,
+      "th3": 90,
+      "eixo_critico": "ombro",
+      "carga_60": 270,
+      "carga_80": 376,
+      "carga_100": 481
+    },
+    {
+      "cenario": "MG996R no ombro E no cotovelo (hipótese)",
+      "pose": "braço vertical, antebraço horizontal (recolhido)",
+      "th2": 0,
+      "th3": 90,
+      "eixo_critico": "cotovelo",
+      "carga_60": 493,
+      "carga_80": 663,
+      "carga_100": 832
+    }
+  ],
+  "pior_pose": [
+    {
+      "cenario": "Projeto atual (MG90S no ombro)",
+      "carga_60_pior_pose": 35,
+      "ombro": 75,
+      "cotovelo_rel": 40
+    },
+    {
+      "cenario": "MG996R no ombro, MG90S no cotovelo",
+      "carga_60_pior_pose": 83,
+      "ombro": -30,
+      "cotovelo_rel": 120
+    },
+    {
+      "cenario": "MG996R no ombro E no cotovelo (hipótese)",
+      "carga_60_pior_pose": 290,
+      "ombro": 60,
+      "cotovelo_rel": 40
+    }
+  ],
+  "tombamento_g": 593,
+  "atrito_garra_g_mu030_60": 132
+}
