@@ -149,8 +149,8 @@ const uint16_t LAMPEJO_MS = 400;        // duração do lampejo de evento
 //   garra    : 72..110 — as mandíbulas se tocam em ~72,5° (horn montado a 75° = dedos paralelos); abaixo disso
 //              o servo fica em travamento (stall) permanente
 //                             base   ombro  cotovelo garra
-uint8_t ANG_MIN[N_JUNTAS]  = {   5,    15,    40,    72 };
-uint8_t ANG_MAX[N_JUNTAS]  = { 175,   165,   140,   110 };
+uint8_t ANG_MIN[N_JUNTAS]  = {   5,    15,    40,    50 };
+uint8_t ANG_MAX[N_JUNTAS]  = { 175,   165,   140,   95 };
 
 // POSIÇÃO DE REFERÊNCIA (pose de repouso, também chamada de "home"): é onde o braço é inicializado no
 // setup() e para onde ele volta sempre que se aperta o botão do joystick 2 (toque curto) ou se envia 'h'.
