@@ -390,10 +390,18 @@ O projeto passa a ter **3 .ino**: oficial, bancada (histórico) e este, de diagn
 - **O sketch de teste existe para separar as duas causas**: tirou calibração, zona morta, `eixoOk`,
   limites, máquina de estados, EEPROM, LED e interpretador de comandos. Lê os 4 eixos crus a 50 Hz,
   anuncia cada eixo que varia >= 300 counts, imprime o centro de repouso marcando quem está fora de
-  512 ± 150, e o comando **`r`** dá a tabela min/max + veredito. **`z`** zera, **`m`** liga o
+  512 ± 150, e o comando **`r`** dá a tabela min/max + veredito. **`z`** zera, **`v`** liga a
+  leitura ao vivo, **`m`** liga o
   "espelho" (cada eixo comanda seu servo em posição ABSOLUTA, preso a ANG_MIN/ANG_MAX e a 2°/20 ms).
   Com o espelho desligado **nenhum servo recebe pulso**, então o PINO[] não importa para o teste
   das alavancas (está em {12,3,4,13} para casar com o hardware atual).
+- **A tela fica QUIETA de propósito** (corrigido em 20/11, 2º pedido do usuário: "os valores
+  continuam aparecendo no monitor, não consigo copiar"). A 1ª versão imprimia 4 linhas/s e o
+  monitor nunca parava. Agora a leitura ao vivo começa DESLIGADA ( liga), sai 1 linha por eixo
+  na primeira vez que ele responde, e o  imprime um bloco estático entre "COPIE DAQUI" e
+  "COPIE ATE AQUI" terminando numa linha **RESUMO** (, repouso/variação)
+  curta o bastante para transcrever à mão. **Lição para sketch de diagnóstico: não streamar** —
+  quem está na bancada precisa do número parado na tela, não rolando.
 - **Como ler o resultado**: A0/A2 parados -> fiação do VRx (fio solto/trocado/furo errado, ou
   joystick sem +5V e GND **do Arduino**). A0/A2 variando 0..1023 -> é a reprovação na calibração, e
   aí o conserto no código é em `calibraJoysticks()` (aceitar centro medido em vez de exigir 512,
