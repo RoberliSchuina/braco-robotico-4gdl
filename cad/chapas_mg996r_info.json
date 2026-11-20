@@ -1,0 +1,79 @@
+{
+  "y_elo1": 26.75,
+  "y_elo2": 41.55,
+  "travessa_mm": 53.5,
+  "palma_mm": 83.1,
+  "travessa_x": [
+    -17.0,
+    -11.0
+  ],
+  "palma_x": [
+    -16.0,
+    -10.0
+  ],
+  "horn_25t": {
+    "r_cubo": 5.55,
+    "r_ponta": 3.6,
+    "braco": 18.0,
+    "bolso": 2.5,
+    "furo_central": 3.4
+  },
+  "limite_cotovelo_graus": 140,
+  "carga_util_60_g": 81,
+  "carga_util_100_g": 146,
+  "verificacao_ok": true,
+  "pecas": [
+    {
+      "arquivo": "13_braco_motriz_mg996r.stl",
+      "nome": "Braço — chapa motriz (MG996R)",
+      "dimensoes_mm": [
+        34.0,
+        104.0,
+        4.0
+      ],
+      "volume_solido_cm3": 9.1,
+      "massa_estimada_g": 6.2,
+      "tempo_estimado_min": 19,
+      "impressao": "Deitada, bolso do horn para cima. Sem suportes."
+    },
+    {
+      "arquivo": "14_braco_livre_mg996r.stl",
+      "nome": "Braço — chapa livre (MG996R)",
+      "dimensoes_mm": [
+        34.0,
+        104.0,
+        57.5
+      ],
+      "volume_solido_cm3": 16.2,
+      "massa_estimada_g": 11.0,
+      "tempo_estimado_min": 33,
+      "impressao": "Deitada, munhão e travessa (6 mm) para cima. Sem suportes."
+    },
+    {
+      "arquivo": "15_antebraco_motriz_mg996r.stl",
+      "nome": "Antebraço — chapa motriz (MG996R)",
+      "dimensoes_mm": [
+        34.0,
+        95.0,
+        4.0
+      ],
+      "volume_solido_cm3": 8.2,
+      "massa_estimada_g": 5.6,
+      "tempo_estimado_min": 17,
+      "impressao": "Deitada, bolso do horn para cima. Sem suportes."
+    },
+    {
+      "arquivo": "16_antebraco_livre_mg996r.stl",
+      "nome": "Antebraço — chapa livre + palma (MG996R)",
+      "dimensoes_mm": [
+        34.0,
+        96.0,
+        87.1
+      ],
+      "volume_solido_cm3": 21.8,
+      "massa_estimada_g": 14.9,
+      "tempo_estimado_min": 45,
+      "impressao": "Deitada, palma em pé (83 mm). Ponte de 23 mm no teto do rasgo de S4."
+    }
+  ]
+}
