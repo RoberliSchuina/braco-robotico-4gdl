@@ -38,6 +38,9 @@ Entregas: BOM, peças 3D (Tinkercad, uma por arquivo) + STL, protótipo montado,
   sinal do arduino"). Não era bug de lógica: `teste_braco_09.11.ino` havia ficado na pinagem antiga
   (S1 em D2, S4 em D5) enquanto o braço já estava fiado para o firmware oficial, então D12 e D13 não
   recebiam pulso. Os **dois .ino voltaram a compartilhar a mesma pinagem**
+- [x] 2026-11-20: **`firmware/teste_alavancas/teste_alavancas.ino`** (3º .ino, de diagnóstico) — a
+  repinagem NÃO resolveu S1/S4 ("sei que o problema é no código"). Ver "S1 e S4 mudos — os dois
+  eixos X". **Pendente: o usuário rodar e dizer o que apareceu no relatório ('r')**
 - [x] 2026-11-12: **plataforma giratória para MG996R** (peça 12, NOVA, não substitui a 02) + **cálculo de carga máxima**; ver "Plataforma para MG996R"
 - [ ] O usuário vai acrescentar fotos e vídeos do projeto em funcionamento
 - [ ] Medir o DSN-VC288 recebido, ajustar `VC288_JANELA` e regerar ANTES de mandar cortar
@@ -367,6 +370,36 @@ do eixo do ombro. Resultados em `cad/carga_maxima.json`.
 - Ordem dos gargalos depois da troca de S2: cotovelo (83 g) < atrito da garra (132 g) < tombamento
   (593 g) < estrutura. Para subir de verdade a carga é preciso trocar **S3 junto** e dar atrito às
   mandíbulas.
+
+## S1 e S4 mudos — os dois eixos X (2026-11-20, EM ABERTO)
+Depois da repinagem para D12/D13 o usuário voltou: "s1 e s4 continuam não funcionando, sei que o
+problema é no código". Pediu "uma versão simplificada apenas para testar todas as alavancas" ->
+`firmware/teste_alavancas/teste_alavancas.ino` (7,5 kB, 23 % flash no UNO; compila também Nano/Mega).
+O projeto passa a ter **3 .ino**: oficial, bancada (histórico) e este, de diagnóstico.
+
+- **A pista que vale**: `PIN_EIXO` está na ordem das juntas = **{A0, A1, A3, A2}**. Logo
+  **S1 <- A0 = J1-VRx** e **S4 <- A2 = J2-VRx**: as duas juntas mudas são exatamente os dois eixos
+  **X**, um em CADA joystick, enquanto S2/S3 (os dois eixos Y) funcionam. Duas falhas idênticas em
+  módulos independentes não são dois servos queimados nem dois pinos de PWM ruins.
+- **A lógica dos dois firmwares foi reconferida e é simétrica entre as 4 juntas** — não há
+  tratamento especial de índice 0 ou 3 em `calibraJoysticks()`, `leJoysticks()` nem `escreveServo()`.
+  O ÚNICO ponto que desliga uma junta em silêncio é **`eixoOk[]`/`eixoAtivo[]`** (posto em 20/10):
+  centro fora de **512 ± 150** ou espalhamento > 40 counts reprova o eixo, o servo energiza e segura
+  a pose, e a alavanca é ignorada. **É exatamente o sintoma relatado.** O firmware avisa (linha
+  "Centro dos joysticks" + ATENCAO, e LED vermelho a 3 Hz), mas o aviso passa batido.
+- **O sketch de teste existe para separar as duas causas**: tirou calibração, zona morta, `eixoOk`,
+  limites, máquina de estados, EEPROM, LED e interpretador de comandos. Lê os 4 eixos crus a 50 Hz,
+  anuncia cada eixo que varia >= 300 counts, imprime o centro de repouso marcando quem está fora de
+  512 ± 150, e o comando **`r`** dá a tabela min/max + veredito. **`z`** zera, **`m`** liga o
+  "espelho" (cada eixo comanda seu servo em posição ABSOLUTA, preso a ANG_MIN/ANG_MAX e a 2°/20 ms).
+  Com o espelho desligado **nenhum servo recebe pulso**, então o PINO[] não importa para o teste
+  das alavancas (está em {12,3,4,13} para casar com o hardware atual).
+- **Como ler o resultado**: A0/A2 parados -> fiação do VRx (fio solto/trocado/furo errado, ou
+  joystick sem +5V e GND **do Arduino**). A0/A2 variando 0..1023 -> é a reprovação na calibração, e
+  aí o conserto no código é em `calibraJoysticks()` (aceitar centro medido em vez de exigir 512,
+  ou alargar CENTRO_TOL), **não** nos pinos. 3,3 V no módulo dá centro ~337 e também reprova.
+- Suspeita menos provável, mas de graça conferir: **VRx e VRy trocados nos dois módulos** — aí os
+  4 eixos leriam, mas a alavanca que o usuário julga ser de S1 comandaria S2.
 
 ## Pendências / ideias de revisão
 - Possível melhoria: rolamento 623ZZ na base, mola de retorno no ombro, Bluetooth (HC-05), cinemática inversa, gravação de trajetória contínua, trava de software para a pose "abaixo da mesa".
