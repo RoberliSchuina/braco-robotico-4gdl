@@ -5,24 +5,31 @@
  *  Plataforma: Arduino UNO R3 (ATmega328P) — compila também em Nano, Mega 2560 e UNO R4
  *  Atuadores : 4 micro-servos SG90/MG90S (base, ombro, cotovelo, garra)
  *  Comando   : 2 módulos joystick analógico KY-023 (2 eixos + botão cada)
- *  Sinalização: LED RGB de estados (liga/desliga, 7 cores) + LED da placa (D13)
+ *  Sinalização: LED RGB de estados (liga/desliga, 7 cores) + LED simples de modo (D2)
  *  Bibliotecas: Servo.h e EEPROM.h (já vêm com a Arduino IDE — não é preciso instalar nada)
  *
  *  Esta versão (09/11/2026) é a FUSÃO do firmware de operação com o sketch de bancada
  *  teste_braco_09.11: o programa que opera o braço é o mesmo que calibra os fins de curso.
  *  Não há mais um segundo .ino no projeto.
  * ----------------------------------------------------------------------------
- *  MAPA DE PINOS — os 9 sinais ocupam D2..D10 EM SEQUÊNCIA, sem furo vago no conector
- *    D2  -> sinal servo S1 (base)          JOYSTICK 1: VRx -> A0 (base)
+ *  MAPA DE PINOS — revisão de 19/11/2026: S1 passou para D12 e S3 para D13 (os dois servos que
+ *  ficavam em D2 e D4). Os demais sinais não mudaram.
+ *    D12 -> sinal servo S1 (base)          JOYSTICK 1: VRx -> A0 (base)
  *    D3  -> sinal servo S2 (ombro)                     VRy -> A1 (ombro)
- *    D4  -> sinal servo S3 (cotovelo)                  SW  -> D6 (gravar / reproduzir)
+ *    D13 -> sinal servo S3 (cotovelo)                  SW  -> D6 (gravar / reproduzir)
  *    D5  -> sinal servo S4 (garra)         JOYSTICK 2: VRx -> A2 (garra)
  *    D8  -> LED RGB vermelho (R)                       VRy -> A3 (cotovelo)
  *    D9  -> LED RGB verde (G)                          SW  -> D7 (referência; longo = garra)
  *    D10 -> LED RGB azul (B)
- *    D13 -> LED da própria placa (status simples)      D11, D12 e 0/1 (RX/TX): livres / não usar
+ *    D2  -> LED simples de modo (opcional)             D4, D11 e 0/1 (RX/TX): livres / não usar
  *    Joysticks: +5V e GND do Arduino. Servos: fonte externa 5 V / 5 A (GND comum!)
  *    LED RGB: perna comum no GND, 220 Ω em cada cor (módulo KY-016 já traz os resistores).
+ *  ATENÇÃO ao D13: é o pino do LED da própria placa (LED + resistor em paralelo com o sinal) e o
+ *  bootloader o usa como SCK, pulsando-o a cada reset/gravação — o cotovelo dá um tranco de ~1 s ao
+ *  ligar ou gravar o sketch, e o LED da placa acompanha o pulso do servo. Funciona, mas se o S3
+ *  tremer ou não responder, o D11 está livre e é o substituto imediato (só trocar PIN_SERVO[2]).
+ *  Por isso o LED simples de modo saiu do D13 e foi para o D2 (vago): dois escritores no mesmo pino
+ *  destruiriam o pulso do servo. No D2 ele é opcional — LED + 220 Ω para o GND, ou nada ligado.
  * ----------------------------------------------------------------------------
  *  CONTROLE
  *    O joystick volta sozinho ao centro, por isso o comando é INCREMENTAL (velocidade):
@@ -95,6 +102,9 @@
  *   2026-11-09  FUSÃO com o sketch de bancada: LED RGB de estados, 'x'/'liga', 'teste'/'varre',
  *               'livre', 'limite'/'limites', 'led' e o atalho de recalibração pelos botões.
  *               Pinos, limites, POS_REF, botões e o formato da EEPROM (0xB4A1) NÃO mudaram.
+ *   2026-11-19  S1 -> D12 e S3 -> D13 (pedido do usuário). D2 e D4 ficaram livres e o LED simples de
+ *               modo passou para o D2, porque o D13 agora é do servo S3. Limites, POS_REF, eixos dos
+ *               joysticks, botões, LED RGB e o formato da EEPROM continuam iguais.
  *
  *  OPERAR COM UMA JUNTA DESLIGADA — vetor JUNTA_LIGADA[] logo abaixo da configuração:
  *    - a junta desligada NÃO recebe attach() nem pulso: o pino fica em repouso, o servo defeituoso
@@ -112,7 +122,8 @@
 const uint8_t  N_JUNTAS       = 4;
 const uint8_t  PIN_SW1        = 6;      // botão do joystick 1
 const uint8_t  PIN_SW2        = 7;      // botão do joystick 2
-const uint8_t  PIN_LED_STATUS = 13;     // LED da placa (D13)
+const uint8_t  PIN_LED_STATUS = 2;      // LED simples de modo — era o LED da placa (D13), que agora
+                                        // é o sinal do servo S3. No D2: LED + 220 Ohm ao GND (opcional).
 const uint32_t SERIAL_BPS     = 115200; // configure o Monitor Serial com a MESMA velocidade
 const uint16_t PERIODO_MS     = 20;     // período do laço de controle (50 Hz = período do PWM dos servos)
 const uint16_t TOQUE_LONGO_MS = 800;
@@ -164,7 +175,7 @@ uint8_t ANG_MAX[N_JUNTAS]  = { 175,   165,   140,   95 };
 // mudar estes valores obriga a remontar os horns, não é só mexer no código.
 // Nesta pose o modelo mede 165 mm de altura e 119 mm de alcance horizontal (cad/mapa_angulos.json).
 const uint8_t POS_REF[N_JUNTAS]  = {  90,    90,    90,    90 };
-const uint8_t PIN_SERVO[N_JUNTAS] = { 2, 3, 4, 5 };
+const uint8_t PIN_SERVO[N_JUNTAS] = { 12, 3, 13, 5 };    // 19/11/2026: S1 em D12 e S3 em D13
 const uint8_t PIN_EIXO[N_JUNTAS]  = { A0, A1, A3, A2 };   // J1-VRx, J1-VRy, J2-VRy, J2-VRx
 const int8_t  SENTIDO[N_JUNTAS]   = { 1, 1, 1, 1 };       // troque para -1 para inverter o sentido de um eixo
 const char*   NOME[N_JUNTAS]      = { "base", "ombro", "cotovelo", "garra" };
@@ -175,7 +186,7 @@ const uint8_t GARRA_FECHADA = 74, GARRA_ABERTA = 110;   // 74 ≈ 2 mm de vão; 
 // JUNTAS EM USO — false = junta desligada (servo com defeito, ausente ou ainda não montado).
 // A junta desligada não recebe attach() nem pulso: o pino de sinal fica em repouso (INPUT), o servo não
 // zumbe nem trava, o eixo do joystick dela fica inerte e as outras juntas funcionam normalmente.
-// 2026-10-29: a BASE (S1 em D2, eixo A0) está desligada por defeito no servo. Trocado o servo, volte
+// 2026-10-29: a BASE (S1 em D12, eixo A0) está desligada por defeito no servo. Trocado o servo, volte
 // este valor para true, monte o horn com a junta em 90° e refaça a calibração de ANG_MIN/ANG_MAX.
 //                                    base   ombro  cotovelo garra
 const bool JUNTA_LIGADA[N_JUNTAS] = { false,  true,   true,   true };
@@ -547,7 +558,7 @@ void imprimeDiagnostico() {
 
 void piscaLed(uint8_t vezes) { piscadasLed = 2 * vezes; tPiscaLed = millis(); }
 
-// LED da placa (D13): aceso = MANUAL, piscando = REPRODUZINDO; pisca rápido 3× ao gravar uma pose.
+// LED simples de modo (D2): aceso = MANUAL, piscando = REPRODUZINDO; pisca rápido 3× ao gravar uma pose.
 // É o indicador simples; quem conta a história completa é o LED RGB.
 void atualizaLed() {
   if (piscadasLed) {
