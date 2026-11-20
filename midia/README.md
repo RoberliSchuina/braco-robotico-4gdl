@@ -9,9 +9,9 @@ Registro do braço montado e operando, feito em 20/11/2026.
 | Arquivo | O que é |
 |---|---|
 | `braco_robotico_demo.mp4` | Vídeo editado — 1920×1080, 30 fps, 2 min 27 s, 46 MB |
-| `fotos/` | 12 fotos do protótipo (4000 × 1848, originais do celular) |
+| `fotos/` | 12 fotos do protótipo (originais do celular, 4000 × 1848; a `163538` foi recortada à mão para 3530 × 1848) |
 | `capa.jpg` | Quadro de abertura usado acima (quadro em 1:15 do vídeo, 1280 px) |
-| `destaque.jpg` | Foto que abre o `README.md` da raiz — `fotos/20261120_163259.jpg` reduzida a 1600 px (281 kB, porque a original tem 2 MB e todo visitante do repositório baixa a imagem); gerada por `preparar_fotos.py` |
+| `destaque.jpg` | Foto que abre o `README.md` da raiz — `fotos/20261120_163538.jpg` reduzida a 1600 px (319 kB, porque todo visitante do repositório baixa a imagem); gerada por `preparar_fotos.py` |
 
 ## O vídeo
 
@@ -38,6 +38,20 @@ vinha só na etiqueta EXIF, foi gravada nos próprios pixels** (10 das 12 fotos;
 delas estavam a 180°). Navegador respeita EXIF, mas o Word e o `python-docx` não —
 sem isso, metade das fotos entraria de cabeça para baixo no relatório. As que já
 estavam na orientação correta foram copiadas byte a byte, sem recompressão.
+
+`20261120_163538.jpg` foi **recortada à mão** (3530 × 1848) e é a que abre o
+`README.md` da raiz. Por isso `preparar_fotos.py` **não sobrescreve** o que já
+existe em `fotos/`: ele só traz do bruto o que está faltando. Para refazer tudo a
+partir do original — descartando recortes — use `--forcar`.
+
+> **Cuidado ao reabrir uma foto num editor de imagem.** Vários deles reescrevem a
+> etiqueta EXIF de rotação ao salvar, mesmo com os pixels já girados: a foto fica
+> certa no arquivo e **de cabeça para baixo no navegador e no GitHub**. Foi o que
+> aconteceu com `20261120_163244.jpg`. O script avisa quando encontra uma etiqueta
+> dessas, mas **não corrige sozinho** — nessa altura não dá para saber se os pixels
+> já estão girados ou não, e aplicar a etiqueta giraria a foto de novo. Abra a foto,
+> veja como ela está, e então apague a etiqueta (pixels certos) ou rode `--forcar`
+> (pixels crus).
 
 ## Como regenerar
 

@@ -1,17 +1,26 @@
 # -*- coding: utf-8 -*-
-"""Copia as fotos do protetipo para midia/fotos/ gravando a rotacao do EXIF
-nos proprios pixels.
+"""Prepara as fotos do prototipo em midia/fotos/ e a imagem de destaque do README.
 
-Motivo: 10 das 12 fotos so carregam a rotacao na tag EXIF Orientation
-(5 delas a 180 graus). Navegador respeita; Word/python-docx e varios
-visualizadores nao -- a foto sairia de cabeca para baixo no relatorio.
-Depois da gravacao a tag vira 1 e o arquivo fica correto em qualquer lugar.
+O que faz:
+  1. copia de "Fotos e videos/Photos-1-001/" o que ainda nao existe em fotos/;
+  2. conserta qualquer foto de fotos/ cuja rotacao esteja so na etiqueta EXIF,
+     gravando-a nos pixels;
+  3. gera destaque.jpg, a versao leve que abre o README da raiz.
+
+Por que o passo 2 existe: navegador e GitHub respeitam a etiqueta EXIF
+Orientation, mas **Word e python-docx nao** -- uma foto so rotacionada pela
+etiqueta entra de cabeca para baixo no relatorio. Das 12 originais, 10 vinham
+assim (5 a 180 graus). E o conserto precisa ser repetivel: editor de imagem
+costuma reescrever a etiqueta ao salvar, desfazendo a correcao.
+
+Por que o passo 1 nao sobrescreve: fotos de fotos/ podem ter sido recortadas a
+mao (foi o caso de 20261120_163538.jpg). Regenerar a partir do bruto apagaria o
+recorte. Para refazer tudo a partir do original: `preparar_fotos.py --forcar`.
 """
 import io
 import os
-import sys
-
 import shutil
+import sys
 
 from PIL import Image, ImageOps
 from PIL import JpegImagePlugin
@@ -21,69 +30,100 @@ RAIZ = os.path.dirname(AQUI)
 ORIGEM = os.path.join(RAIZ, "Fotos e videos", "Photos-1-001")
 DESTINO = os.path.join(AQUI, "fotos")
 
-os.makedirs(DESTINO, exist_ok=True)
-total_ant = total_dep = 0
-for nome in sorted(os.listdir(ORIGEM)):
-    if not nome.lower().endswith(".jpg"):
-        continue
-    cam = os.path.join(ORIGEM, nome)
-    im = Image.open(cam)
-    orient = im.getexif().get(274, 1)
-    antes = im.size
-
-    destino = os.path.join(DESTINO, nome)
-    if orient in (1, None):
-        # nada a girar: copia byte a byte, sem gerar perda
-        shutil.copy2(cam, destino)
-        im2 = im
-        dados = open(destino, "rb").read()
-    else:
-        amostragem = JpegImagePlugin.get_sampling(im)
-        qtabelas = im.quantization
-        im2 = ImageOps.exif_transpose(im)      # grava a rotacao nos pixels
-        exif = im2.getexif()
-        exif[274] = 1                          # orientacao agora e "normal"
-
-        buf = io.BytesIO()
-        # reencode com as tabelas de quantizacao da origem: mesma qualidade
-        im2.save(buf, "JPEG", qtables=qtabelas, subsampling=amostragem,
-                 optimize=True, exif=exif)
-        dados = buf.getvalue()
-        with open(destino, "wb") as fh:
-            fh.write(dados)
-
-    a = os.path.getsize(cam)
-    total_ant += a
-    total_dep += len(dados)
-    print("%s  exif=%d  %sx%s -> %sx%s  %.2f -> %.2f MB"
-          % (nome, orient, antes[0], antes[1], im2.size[0], im2.size[1],
-             a / 1048576, len(dados) / 1048576))
-
-print("\ntotal: %.1f MB -> %.1f MB" % (total_ant / 1048576, total_dep / 1048576))
-
-# conferencia: reabre e exige orientacao 1
-ruins = []
-for nome in sorted(os.listdir(DESTINO)):
-    if nome.lower().endswith(".jpg"):
-        o = Image.open(os.path.join(DESTINO, nome)).getexif().get(274, 1)
-        if o != 1:
-            ruins.append((nome, o))
-print("conferencia:", "OK - todas com orientacao 1" if not ruins else ruins)
-
-# versao leve para abrir o README da raiz: a foto escolhida tem 4000 px e ~2 MB,
-# e o README e a primeira pagina do repositorio (todo visitante baixa a imagem).
-DESTAQUE_ORIGEM = "20261120_163259.jpg"   # vista de cima com o conjunto inteiro
+DESTAQUE_ORIGEM = "20261120_163538.jpg"   # vista de cima do braco sobre a base
 DESTAQUE_LARGURA = 1600
 
-cam = os.path.join(DESTINO, DESTAQUE_ORIGEM)
-if os.path.exists(cam):
-    im = Image.open(cam)
-    alt = round(im.height * DESTAQUE_LARGURA / im.width)
-    im.resize((DESTAQUE_LARGURA, alt), Image.LANCZOS).save(
-        os.path.join(AQUI, "destaque.jpg"), "JPEG", quality=88, optimize=True)
-    print("destaque.jpg: %dx%d  %.0f kB"
-          % (DESTAQUE_LARGURA, alt, os.path.getsize(os.path.join(AQUI, "destaque.jpg")) / 1024))
-else:
-    print("AVISO: %s nao encontrada, destaque.jpg nao foi gerada" % DESTAQUE_ORIGEM)
+FORCAR = "--forcar" in sys.argv
 
-sys.exit(1 if ruins else 0)
+
+def grava_rotacao(caminho):
+    """Grava a rotacao do EXIF nos pixels e zera a etiqueta. Devolve o angulo
+    aplicado, ou 0 se a foto ja estava correta.
+
+    So pode ser chamada em copia recem-feita do BRUTO, onde a etiqueta foi
+    escrita pela camera e e confiavel. Numa foto ja tratada a etiqueta pode
+    estar obsoleta -- um editor de imagem costuma reescreve-la ao salvar,
+    mesmo com os pixels ja girados -- e aplica-la giraria a foto de novo.
+    """
+    im = Image.open(caminho)
+    orient = im.getexif().get(274, 1)
+    if orient in (1, None):
+        return 0
+    # reencode com as tabelas de quantizacao da origem: mesma qualidade.
+    # (subsampling="keep" NAO funciona depois do transpose -- a imagem deixa
+    #  de ser "um JPEG" para o Pillow e ele levanta ValueError.)
+    amostragem = JpegImagePlugin.get_sampling(im)
+    qtabelas = im.quantization
+    im2 = ImageOps.exif_transpose(im)
+    exif = im2.getexif()
+    exif[274] = 1
+
+    buf = io.BytesIO()
+    im2.save(buf, "JPEG", qtables=qtabelas, subsampling=amostragem,
+             optimize=True, exif=exif)
+    with open(caminho, "wb") as fh:
+        fh.write(buf.getvalue())
+    return {2: 0, 3: 180, 6: 90, 8: 270}.get(orient, orient)
+
+
+def main():
+    if not os.path.isdir(ORIGEM):
+        sys.exit("Material bruto ausente: %s\n(fica fora do git -- ver midia/README.md)"
+                 % ORIGEM)
+    os.makedirs(DESTINO, exist_ok=True)
+
+    copiadas = mantidas = giradas = 0
+    for nome in sorted(os.listdir(ORIGEM)):
+        if not nome.lower().endswith(".jpg"):
+            continue
+        destino = os.path.join(DESTINO, nome)
+        if os.path.exists(destino) and not FORCAR:
+            mantidas += 1
+            continue
+        shutil.copy2(os.path.join(ORIGEM, nome), destino)
+        copiadas += 1
+        ang = grava_rotacao(destino)          # so aqui: etiqueta da camera
+        if ang:
+            print("  %s: rotacao de %d graus gravada nos pixels" % (nome, ang))
+            giradas += 1
+    print("fotos: %d copiadas do bruto (%d giradas), %d ja existentes mantidas%s"
+          % (copiadas, giradas, mantidas, " (--forcar refaz todas)" if mantidas else ""))
+
+    # conferencia: nenhuma foto pode depender da etiqueta para aparecer certa.
+    # Nao consertamos automaticamente -- numa foto ja tratada nao da para saber
+    # se a etiqueta ficou obsoleta (pixels certos) ou se a foto e nova e crua.
+    ruins = [(n, Image.open(os.path.join(DESTINO, n)).getexif().get(274, 1))
+             for n in sorted(os.listdir(DESTINO)) if n.lower().endswith(".jpg")]
+    ruins = [(n, o) for n, o in ruins if o != 1]
+    if not ruins:
+        print("conferencia: OK - todas com orientacao 1")
+    else:
+        print("conferencia: ATENCAO - %d foto(s) com etiqueta de rotacao:" % len(ruins))
+        for n, o in ruins:
+            print("   %s  orientation=%s" % (n, o))
+        print("   Abra cada uma e veja se ja aparece certa:")
+        print("   - se SIM, a etiqueta ficou obsoleta (editor de imagem costuma")
+        print("     reescreve-la ao salvar): apague so a etiqueta, nao gire os pixels;")
+        print("   - se NAO, rode com --forcar para refazer a partir do bruto")
+        print("     (atencao: --forcar descarta recortes feitos a mao).")
+
+    # versao leve para abrir o README da raiz: a foto escolhida tem ~4000 px e
+    # ~2 MB, e o README e a primeira pagina do repositorio (todo visitante
+    # baixa a imagem).
+    cam = os.path.join(DESTINO, DESTAQUE_ORIGEM)
+    if os.path.exists(cam):
+        im = Image.open(cam)
+        alt = round(im.height * DESTAQUE_LARGURA / im.width)
+        saida = os.path.join(AQUI, "destaque.jpg")
+        im.resize((DESTAQUE_LARGURA, alt), Image.LANCZOS).save(
+            saida, "JPEG", quality=88, optimize=True)
+        print("destaque.jpg: %s -> %dx%d, %.0f kB"
+              % (DESTAQUE_ORIGEM, DESTAQUE_LARGURA, alt, os.path.getsize(saida) / 1024))
+    else:
+        print("AVISO: %s nao encontrada, destaque.jpg nao foi gerada" % DESTAQUE_ORIGEM)
+
+    return 1 if ruins else 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

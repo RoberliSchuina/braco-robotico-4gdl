@@ -536,6 +536,17 @@ e publique fotos e vídeo no GitHub. Entrou em `midia/` (README próprio com a t
   `subsampling=get_sampling(im)`) para não perder qualidade; as 2 já corretas são copiadas byte a
   byte. Armadilha: `subsampling="keep"` **não** funciona depois de `ImageOps.exif_transpose()`
   ("Cannot use 'keep' when original image is not a JPEG").
+- **A etiqueta EXIF só é confiável no arquivo BRUTO** (escrita pela câmera). Depois que a foto passa
+  por um editor, ela pode estar obsoleta: vários editores **reescrevem a etiqueta ao salvar mesmo com
+  os pixels já girados** — a foto fica certa no arquivo e **de cabeça para baixo no navegador/GitHub**.
+  Aconteceu em 20/11 com `20261120_163244.jpg` (etiqueta voltou a 3 com os pixels corretos). Nessa
+  situação **não dá para decidir por programa** se os pixels estão crus ou já girados: aplicar a
+  etiqueta gira a foto de novo (erro que cometi e desfiz com `git checkout 4a0d28b -- <foto>`).
+  Por isso `preparar_fotos.py` só grava a rotação **na hora de copiar do bruto**; numa foto já
+  existente ele apenas **avisa** e pede decisão humana.
+- **`preparar_fotos.py` não sobrescreve `midia/fotos/`**: só traz do bruto o que falta (`--forcar`
+  refaz tudo). É o que protege recortes manuais — `20261120_163538.jpg` foi recortada pelo usuário
+  para 3530×1848 e é a foto que abre o README da raiz.
 - **Áudio**: o original das filmagens foi mantido (ruído de servo e ambiente), com +6 dB e limitador,
   porque a gravação é baixa (média ≈ −35 dB). Conferido depois: pico do canal esquerdo −11,5 dB e
   **2 amostras isoladas** a 0 dB no direito (flat factor 0) = overshoot do AAC, não clipping.
