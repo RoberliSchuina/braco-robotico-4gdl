@@ -32,7 +32,7 @@ Entregas: BOM, peças 3D (Tinkercad, uma por arquivo) + STL, protótipo montado,
 - [x] 2026-11-07: **toque no SW do joystick liga o modo joystick** (recurso depois fundido no firmware único)
 - [x] 2026-11-09: **FIRMWARE ÚNICO** — `firmware/braco_robotico/braco_robotico.ino` passou a ser o único programa do projeto (fusão com o sketch de bancada). `firmware/teste_braco_29.10/` e `Ambiente de testes/` foram APAGADOS; ver "Firmware único (fusão de 2026-11-09)"
 - [x] 2026-11-11: **sketch de bancada RECONSTRUÍDO** em `firmware/teste_braco_09.11/teste_braco_09.11.ino` (pedido do usuário). O projeto volta a ter 2 .ino, de propósito: `braco_robotico.ino` é o firmware oficial e este é referência histórica do desenvolvimento do LED. Ver "Firmware único"
-- [x] 2026-11-19: **S1 em D12 e S3 em D13** no firmware oficial (pedido do usuário); o LED simples de
+- [x] 2026-11-19: **S1 em D12 e S4 em D13** no firmware oficial (pedido do usuário); o LED simples de
   modo saiu do D13 para o D2. Ver "Firmware — fatos não óbvios"
 - [x] 2026-11-12: **plataforma giratória para MG996R** (peça 12, NOVA, não substitui a 02) + **cálculo de carga máxima**; ver "Plataforma para MG996R"
 - [ ] O usuário vai acrescentar fotos e vídeos do projeto em funcionamento
@@ -90,17 +90,18 @@ Armadilha de ambiente: patches via `python - <<'EOF'` (heredoc) no Git Bash às 
 ## Firmware — fatos não óbvios
 - Protoboard (guia HTML): só as trilhas da direita são usadas — + = 5 V da fonte (servos), − = GND comum; 5 V do Arduino para os joysticks vai pela linha 21. Sugestão de linhas: fonte 2/3, C1 4, GND Arduino 5, S1 6/7, S2 10/11, S3 14/15, S4 18/19, J1 GND 24, J2 GND 29.
 - **Pinos — revisão de 2026-11-19 (vale esta)**: no firmware oficial `braco_robotico.ino` os servos
-  **S1 e S3 foram para D12 e D13** (pedido do usuário, sem sintoma relatado); S2/S4 seguem em **D3/D5**,
-  botões em **D6/D7**, LED RGB em **D8/D9/D10**, eixos analógicos inalterados. **D2 e D4 ficaram livres.**
+  **S1 e S4 foram para D12 e D13** (pedido do usuário, sem sintoma relatado); S2/S3 seguem em **D3/D4**,
+  botões em **D6/D7**, LED RGB em **D8/D9/D10**, eixos analógicos inalterados. **D2 e D5 ficaram livres.**
   Duas consequências não óbvias:
   (a) **D13 é o pino do LED da placa** e era `PIN_LED_STATUS` — dois escritores no mesmo pino destroem o
   pulso do servo, então o LED simples de modo **passou para o D2** (opcional: LED + 220 Ω ao GND; nada
   ligado também serve). O LED RGB de estados não mudou e continua sendo o indicador principal;
   (b) o D13 tem LED + resistor em paralelo com o sinal e o **bootloader o pulsa como SCK a cada
-  reset/gravação** → o cotovelo dá um tranco de ~1 s ao ligar ou gravar. Funciona; se o S3 tremer ou
-  não responder, **D11 está livre** e basta trocar `PIN_SERVO[2]`.
+  reset/gravação** → a **garra** dá um tranco de ~1 s ao ligar ou gravar (gravar com a garra vazia:
+  um objeto preso pode ser apertado ou escapar). Funciona; se o S4 tremer ou não responder, **D5 (de
+  onde ele saiu) e D11 estão livres** e basta trocar `PIN_SERVO[3]`.
   O sketch de bancada `teste_braco_09.11.ino` **NÃO** foi repinado (segue D2..D10): gravar um ou outro
-  agora exige refiar S1 e S3. Ainda não atualizados com a pinagem nova: guia HTML, esquema elétrico,
+  agora exige refiar S1 e S4. Ainda não atualizados com a pinagem nova: guia HTML, esquema elétrico,
   relatório e manual de montagem.
 - **Pinos (revisão de 2026-11-07 — histórico, pedido do usuário "organizar melhor e evitar falhas ao conectar")**: servos S1..S4 em **D2 D3 D4 D5**, botões SW1/SW2 em **D6 D7**, LED RGB R/G/B em **D8 D9 D10** — os 9 sinais ocupam **D2..D10 em sequência**, sem furo vago (3º ao 8º furo do bloco 0–7 contando do RX←0, mais os 3 primeiros do bloco 8–13). Eixos inalterados: J1 VRx→A0 (base), VRy→A1 (ombro); J2 VRx→A2 (garra), VRy→A3 (cotovelo). D11/D12/D13 livres (D13 = LED da placa). `PIN_EIXO` está na ordem das juntas = {A0, A1, A3, A2}.
   Valia aqui: **os dois firmwares usam a mesma pinagem** — deixou de valer em 2026-11-19 (ver acima). Pinagem antiga (até 2026-11-06): servos D3/D5/D6/D9, SW D2/D4, LED D10/D11/D12.
