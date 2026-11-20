@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """gerar_esquema.py — desenha o esquema elétrico de ligação (imagens/esquema_eletrico.png).
 Arduino UNO + 4 servos (fonte externa) + 2 módulos joystick KY-023 + LED RGB de estados.
-Pinagem de sinais (07/11/2026): D2..D10 em sequência — D2..D5 servos, D6/D7 botões, D8..D10 LED."""
+Pinagem de sinais (19/11/2026): S1 em D12 e S4 em D13; S2/S3 em D3/D4, D6/D7 botões, D8..D10 LED."""
 import os
 import matplotlib; matplotlib.use('Agg')
 import matplotlib.pyplot as plt
@@ -26,12 +26,12 @@ def ponto(x, y, cor=PRETO): ax.add_patch(Circle((x, y), 0.7, fc=cor, ec=cor))
 # ---------------- Arduino UNO
 caixa(38, 22, 30, 62, "ARDUINO UNO R3", "#dfe9f5", 12)
 pinos_esq = {"5V": 80, "D6": 74, "A0": 66, "A1": 61, "A2": 50, "A3": 45, "D7": 38, "GND": 32}
-pinos_dir = {"D2": 73, "D3": 63, "D4": 53, "D5": 43, "D8": 34, "D9": 29, "D10": 24}
+pinos_dir = {"D12": 73, "D3": 63, "D4": 53, "D13": 43, "D8": 34, "D9": 29, "D10": 24}
 for n, y in pinos_esq.items(): ax.text(39, y, n, ha='left', va='center', fontsize=9)
 for n, y in pinos_dir.items(): ax.text(67, y, n, ha='right', va='center', fontsize=9)
 ax.text(53, 27, "USB (programação)", ha='center', fontsize=8, style='italic')
-ax.text(53, 56, "LED de status: D13\n(LED da própria placa)", ha='center', fontsize=8)
-ax.text(53, 70, "sinais em D2..D10,\nsem furo vago no meio", ha='center', fontsize=7.5, style='italic', color="#555")
+ax.text(53, 56, "LED de modo: D2\n(LED externo opcional)", ha='center', fontsize=8)
+ax.text(53, 70, "S1 e S4 em D12/D13;\nD2 e D5 livres", ha='center', fontsize=7.5, style='italic', color="#555")
 
 # ---------------- barramentos
 Y_VEXT, Y_GND = 82, 10
@@ -49,7 +49,7 @@ fio([(143, 79), (149, 79)], PRETO, 3); fio([(143, 77), (149, 77)], PRETO, 3)
 ax.text(150.5, 78, "C1 1000 µF / 16 V", va='center', fontsize=7.5)
 
 # ---------------- servos
-servos = [("S1 BASE", "D2", 73), ("S2 OMBRO", "D3", 63), ("S3 COTOVELO", "D4", 53), ("S4 GARRA", "D5", 43)]
+servos = [("S1 BASE", "D12", 73), ("S2 OMBRO", "D3", 63), ("S3 COTOVELO", "D4", 53), ("S4 GARRA", "D13", 43)]
 for i, (nome, pino, ypin) in enumerate(servos):
     x, y = 100, 66 - i * 15
     caixa(x, y, 32, 11, nome, "#e2f0d9", 9)

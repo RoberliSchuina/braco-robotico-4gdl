@@ -54,6 +54,7 @@ python cad/plataforma_mg996r.py  # ~40 s: peça 12 (plataforma para MG996R) -> S
 python cad/carga_maxima.py       # ~1 min: carga útil por cenário de servo -> cad/carga_maxima.json
 python cad/mapa_angulos.py       # ~1 min: ângulo de cada servo -> pose/altura/alcance -> cad/mapa_angulos.json
 python cad/gerar_esquema.py      # -> imagens/esquema_eletrico.png
+python cad/reembute_esquema.py   # reembute o PNG no Circuito_Braco_Robotico.html (rodar SEMPRE depois)
 python relatorio/gerar_relatorio.py
 python relatorio/gerar_lista_parafusos.py
 python relatorio/gerar_manual_montagem.py
@@ -101,8 +102,10 @@ Armadilha de ambiente: patches via `python - <<'EOF'` (heredoc) no Git Bash às 
   um objeto preso pode ser apertado ou escapar). Funciona; se o S4 tremer ou não responder, **D5 (de
   onde ele saiu) e D11 estão livres** e basta trocar `PIN_SERVO[3]`.
   O sketch de bancada `teste_braco_09.11.ino` **NÃO** foi repinado (segue D2..D10): gravar um ou outro
-  agora exige refiar S1 e S4. Ainda não atualizados com a pinagem nova: guia HTML, esquema elétrico,
-  relatório e manual de montagem.
+  agora exige refiar S1 e S4. **Já atualizados** com a pinagem nova: `Circuito_Braco_Robotico.html`
+  (textos, desenho da protoboard e tabela) e `cad/gerar_esquema.py` → `imagens/esquema_eletrico.png`,
+  reembutido no HTML por **`cad/reembute_esquema.py`** (script novo — antes a troca do base64 era à mão).
+  **Ainda não atualizados**: relatório e manual de montagem.
 - **Pinos (revisão de 2026-11-07 — histórico, pedido do usuário "organizar melhor e evitar falhas ao conectar")**: servos S1..S4 em **D2 D3 D4 D5**, botões SW1/SW2 em **D6 D7**, LED RGB R/G/B em **D8 D9 D10** — os 9 sinais ocupam **D2..D10 em sequência**, sem furo vago (3º ao 8º furo do bloco 0–7 contando do RX←0, mais os 3 primeiros do bloco 8–13). Eixos inalterados: J1 VRx→A0 (base), VRy→A1 (ombro); J2 VRx→A2 (garra), VRy→A3 (cotovelo). D11/D12/D13 livres (D13 = LED da placa). `PIN_EIXO` está na ordem das juntas = {A0, A1, A3, A2}.
   Valia aqui: **os dois firmwares usam a mesma pinagem** — deixou de valer em 2026-11-19 (ver acima). Pinagem antiga (até 2026-11-06): servos D3/D5/D6/D9, SW D2/D4, LED D10/D11/D12.
   Armadilha ao renomear: a troca é uma **permutação**, então `sed` em cadeia se atropela (D3→D2 e depois D2→D6 transforma servo em botão) — usar uma única passada de regex com dicionário, e **proteger o base64** da imagem dentro do HTML. Cuidado também com "PWM de D9/D10", que é fato do **Timer1 do AVR** (OC1A/OC1B) e não pinagem nossa: não pode ser renomeado.
