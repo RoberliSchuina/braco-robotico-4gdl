@@ -39,8 +39,12 @@ Entregas: BOM, peças 3D (Tinkercad, uma por arquivo) + STL, protótipo montado,
   (S1 em D2, S4 em D5) enquanto o braço já estava fiado para o firmware oficial, então D12 e D13 não
   recebiam pulso. Os **dois .ino voltaram a compartilhar a mesma pinagem**
 - [x] 2026-11-20: **`firmware/teste_alavancas/teste_alavancas.ino`** (3º .ino, de diagnóstico) — a
-  repinagem NÃO resolveu S1/S4 ("sei que o problema é no código"). Ver "S1 e S4 mudos — os dois
-  eixos X". **Pendente: o usuário rodar e dizer o que apareceu no relatório ('r')**
+  repinagem NÃO resolveu S1/S4. O teste provou que **os 4 eixos de joystick estão bons** e a causa
+  do S1 é **`JUNTA_LIGADA[0] = false`** (contorno de 29/10 para o servo da base com defeito): sem
+  `attach()`, sem pulso no D12. Ver "S1 mudo = JUNTA_LIGADA[0]"
+- [ ] 2026-11-20: **decidir se o servo S1 foi trocado** -> se sim, `JUNTA_LIGADA[0] = true`.
+  E **S4/garra em aberto**: suspeita de `ANG_MIN[3] = 50` fechando 23° contra as próprias
+  mandíbulas (tocam a 73°). Pendente o teste `m` (espelho) do sketch de diagnóstico
 - [x] 2026-11-12: **plataforma giratória para MG996R** (peça 12, NOVA, não substitui a 02) + **cálculo de carga máxima**; ver "Plataforma para MG996R"
 - [ ] O usuário vai acrescentar fotos e vídeos do projeto em funcionamento
 - [ ] Medir o DSN-VC288 recebido, ajustar `VC288_JANELA` e regerar ANTES de mandar cortar
@@ -371,7 +375,49 @@ do eixo do ombro. Resultados em `cad/carga_maxima.json`.
   (593 g) < estrutura. Para subir de verdade a carga é preciso trocar **S3 junto** e dar atrito às
   mandíbulas.
 
-## S1 e S4 mudos — os dois eixos X (2026-11-20, EM ABERTO)
+## S1 mudo = JUNTA_LIGADA[0] (2026-11-20, RESOLVIDO no diagnóstico)
+**A causa do S1 é o próprio `JUNTA_LIGADA[0] = false` da linha 193 do firmware oficial**, posto em
+2026-10-29 porque o servo da base estava com defeito. Junta desligada **não recebe `attach()`** -> o
+pino fica em repouso e **nenhum pulso sai do D12**, que é literalmente o sintoma relatado ("a porta
+S1 não está enviando sinal do arduino"). Não é bug: é o contorno de 29/10 fazendo o que foi pedido.
+Religar = `JUNTA_LIGADA[0] = true` + horn da base montado em 90° + recalibrar ANG_MIN/MAX.
+**Lição de processo: ao receber "a junta X não responde", conferir `JUNTA_LIGADA` ANTES de tudo.**
+Nesta sessão foram gastas duas rodadas (repinagem D12/D13 e um sketch de diagnóstico) antes disso,
+com o fato já escrito neste arquivo e no cabeçalho do .ino.
+
+### O que o teste das alavancas mediu (20/11, relatório do usuário)
+`firmware/teste_alavancas/teste_alavancas.ino`, comando `r`:
+
+| eixo | junta | repouso | variação | veredito |
+|---|---|---|---|---|
+| A0 J1-VRx | S1 base | **517** | 0..1023 | responde |
+| A1 J1-VRy | S2 ombro | 500 | 0..1023 | responde |
+| A3 J2-VRy | S3 cotovelo | 510 | 0..1022 | responde |
+| A2 J2-VRx | S4 garra | **630** | 0..1023 | responde |
+
+- **Os 4 eixos estão bons**: fiação dos joysticks, +5V/GND e os 4 canais do ADC, todos OK. Isso
+  **derruba a hipótese dos "dois eixos X"** que eu havia levantado (A0 em 517 passa folgado na
+  calibração): o padrão S1+S4 = os dois VRx era coincidência.
+- **A2 (garra) descansa em 630, 118 counts fora do centro.** Passa na calibração por pouco
+  (CENTRO_TOL = 150), então o eixo NÃO é reprovado — mas a alavanca está enviesada e o curso útil
+  fica assimétrico (630 counts para um lado, 393 para o outro). Vale olhar a montagem do módulo J2.
+
+### S4 (garra) — ainda em aberto, e o suspeito não é o sinal
+`JUNTA_LIGADA[3] = true` e `eixoAtivo[3]` passa, logo **o D13 recebe pulso e o código não bloqueia
+nada**. O suspeito é mecânico-de-limite: o firmware oficial está com
+**`ANG_MIN[3] = 50` e `ANG_MAX[3] = 95`** (linhas 164/165), que são os valores de **bancada** do
+commit 0f606d5, medidos com o servo SOLTO. Com as engrenagens montadas, `verificacao.py` diz que as
+**mandíbulas se tocam a 73°** — ou seja, o fim de curso de fechamento manda a garra **23° para
+dentro do batente dela mesma**: o servo trava contra si, zumbe, puxa ~650 mA e não anda, o que de
+fora parece "servo morto". A seção "Decisões de projeto" ainda documenta 72..110 como a faixa segura
+e manda **subir ANG_MIN[3] para 73/74 na calibração**; o firmware contradiz isso hoje.
+**NÃO mexido por conta própria**: 50..95 foi ajuste de bancada do próprio usuário e só ele sabe se o
+horn da garra ficou indexado diferente (estriado de 21 dentes = ±8,6° de erro possível).
+**Próximo teste, que decide**: no sketch de diagnóstico, comando **`m`** (espelho) — ele pulsa os 4
+pinos sem `JUNTA_LIGADA`, sem calibração e dentro de 74..110 na garra. Quem seguir a alavanca ali
+tem servo, pino e fio bons, e o problema é só de configuração do firmware.
+
+## Histórico da investigação de 20/11 (hipótese descartada)
 Depois da repinagem para D12/D13 o usuário voltou: "s1 e s4 continuam não funcionando, sei que o
 problema é no código". Pediu "uma versão simplificada apenas para testar todas as alavancas" ->
 `firmware/teste_alavancas/teste_alavancas.ino` (7,5 kB, 23 % flash no UNO; compila também Nano/Mega).
