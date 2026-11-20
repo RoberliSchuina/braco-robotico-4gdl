@@ -171,8 +171,8 @@ const uint16_t LAMPEJO_MS = 400;        // duração do lampejo de evento
 //              (commit 0f606d5) e vieram para cá por engano — montado, fechar até 50° joga o servo
 //              23° para dentro do batente. Decisão do usuário em 20/11: vale a faixa do CAD.
 //                             base   ombro  cotovelo garra
-uint8_t ANG_MIN[N_JUNTAS]  = {   5,    15,    40,    74 };
-uint8_t ANG_MAX[N_JUNTAS]  = { 175,   165,   140,   110 };
+uint8_t ANG_MIN[N_JUNTAS]  = {   5,    15,    40,    50 };
+uint8_t ANG_MAX[N_JUNTAS]  = { 175,   120,   140,   100 };
 
 // POSIÇÃO DE REFERÊNCIA (pose de repouso, também chamada de "home"): é onde o braço é inicializado no
 // setup() e para onde ele volta sempre que se aperta o botão do joystick 2 (toque curto) ou se envia 'h'.
