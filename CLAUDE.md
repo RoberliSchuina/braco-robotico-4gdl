@@ -34,6 +34,10 @@ Entregas: BOM, peças 3D (Tinkercad, uma por arquivo) + STL, protótipo montado,
 - [x] 2026-11-11: **sketch de bancada RECONSTRUÍDO** em `firmware/teste_braco_09.11/teste_braco_09.11.ino` (pedido do usuário). O projeto volta a ter 2 .ino, de propósito: `braco_robotico.ino` é o firmware oficial e este é referência histórica do desenvolvimento do LED. Ver "Firmware único"
 - [x] 2026-11-19: **S1 em D12 e S4 em D13** no firmware oficial (pedido do usuário); o LED simples de
   modo saiu do D13 para o D2. Ver "Firmware — fatos não óbvios"
+- [x] 2026-11-20: **sketch de bancada repinado junto** (usuário: "as portas s1 e s4 não estão enviando
+  sinal do arduino"). Não era bug de lógica: `teste_braco_09.11.ino` havia ficado na pinagem antiga
+  (S1 em D2, S4 em D5) enquanto o braço já estava fiado para o firmware oficial, então D12 e D13 não
+  recebiam pulso. Os **dois .ino voltaram a compartilhar a mesma pinagem**
 - [x] 2026-11-12: **plataforma giratória para MG996R** (peça 12, NOVA, não substitui a 02) + **cálculo de carga máxima**; ver "Plataforma para MG996R"
 - [ ] O usuário vai acrescentar fotos e vídeos do projeto em funcionamento
 - [ ] Medir o DSN-VC288 recebido, ajustar `VC288_JANELA` e regerar ANTES de mandar cortar
@@ -101,8 +105,16 @@ Armadilha de ambiente: patches via `python - <<'EOF'` (heredoc) no Git Bash às 
   reset/gravação** → a **garra** dá um tranco de ~1 s ao ligar ou gravar (gravar com a garra vazia:
   um objeto preso pode ser apertado ou escapar). Funciona; se o S4 tremer ou não responder, **D5 (de
   onde ele saiu) e D11 estão livres** e basta trocar `PIN_SERVO[3]`.
-  O sketch de bancada `teste_braco_09.11.ino` **NÃO** foi repinado (segue D2..D10): gravar um ou outro
-  agora exige refiar S1 e S4. **Já atualizados** com a pinagem nova: `Circuito_Braco_Robotico.html`
+  O sketch de bancada `teste_braco_09.11.ino` ficou um dia para trás (D2..D10) e foi **repinado em
+  2026-11-20** com o mesmo par (S1 -> D12, S4 -> D13): os dois .ino voltaram a compartilhar pinagem,
+  então gravar um ou outro não exige refiar nada. **Essa defasagem de um dia foi o sintoma "S1 e S4
+  não enviam sinal"** — com o braço fiado para o firmware oficial, o sketch pulsava D2/D5, que já
+  estavam vazios, e nada chegava a D12/D13. Lição: **repinagem é mudança de HARDWARE** — tem de ser
+  aplicada em TODOS os .ino do projeto no mesmo commit, nunca em um só. O sketch de bancada não tem
+  LED simples de modo (o do oficial é que precisou sair do D13 para o D2), logo não há dois
+  escritores no D13 nele; o tranco de ~1 s da garra ao ligar/gravar (bootloader pulsando D13 como
+  SCK) vale para os dois. 18864 B flash / 604 B RAM no UNO, sem avisos (tamanho idêntico ao de antes
+  da repinagem, como esperado de uma troca de constantes; também compila para Nano e Mega). **Já atualizados** com a pinagem nova: `Circuito_Braco_Robotico.html`
   (textos, desenho da protoboard e tabela) e `cad/gerar_esquema.py` → `imagens/esquema_eletrico.png`,
   reembutido no HTML por **`cad/reembute_esquema.py`** (script novo — antes a troca do base64 era à mão).
   **Ainda não atualizados**: relatório e manual de montagem.

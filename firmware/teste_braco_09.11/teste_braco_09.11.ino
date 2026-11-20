@@ -11,10 +11,15 @@
  *  Compila em 18864 bytes de flash e 604 de RAM no UNO: os MESMOS números do original, o que indica
  *  que o binário gerado é idêntico (o tamanho conta cada string F() e cada byte de código).
  *
+ *  >> 20/11/2026: REPINAGEM DE S1 E S4 <<
+ *  S1 saiu do D2 para o D12 e S4 saiu do D5 para o D13, acompanhando a repinagem que o firmware
+ *  oficial recebeu em 19/11/2026. Era a causa de "S1 e S4 não enviam sinal": com o braço já refiado
+ *  para o firmware oficial, este sketch continuava pulsando D2 e D5, que não têm mais servo nenhum.
+ *
  *  O FIRMWARE OFICIAL DO PROJETO é firmware/braco_robotico/braco_robotico.ino, que desde 09/11 já
  *  traz tudo que está aqui (LED RGB, 'x'/'liga', 'teste'/'varre', 'livre', 'limite'/'limites', 'led').
  *  Este sketch fica como referência histórica do desenvolvimento do LED. ATENÇÃO: os dois usam a
- *  MESMA pinagem (D2..D10), então gravar um ou outro não exige refiar nada.
+ *  MESMA pinagem (a de 19/11/2026, na tabela abaixo), então gravar um ou outro não exige refiar nada.
  *  Placa: Arduino UNO (compila também para Nano, Mega e UNO R4). Biblioteca: Servo.h (vem com a IDE).
  *  Monitor Serial: 115200 bps, qualquer opção de fim de linha.
  * ----------------------------------------------------------------------------
@@ -70,15 +75,21 @@
  *  que e justamente quem faz o PWM de D9 e D10 (= G e B). Liga/desliga ainda da uma cor sempre igual.
  *
  *    Servo  Pino  Junta      Joystick     Faixa
- *    S1     D2    base       J1-X (A0)    0..180
+ *    S1     D12   base       J1-X (A0)    0..180
  *    S2     D3    ombro      J1-Y (A1)    0..110
  *    S3     D4    cotovelo   J2-Y (A3)    0..180   (no modelo 3D a palma encosta na plataforma a 148° dobrando sobre o braço)
- *    S4     D5    garra      J2-X (A2)    70..120  (70 = fechada, 120 = aberta)
+ *    S4     D13   garra      J2-X (A2)    50..95   (50 = fechada, 95 = aberta; ajuste de bancada)
  *    LED RGB  D8 (R) / D9 (G) / D10 (B)   estados do sketch; pino comum do LED no GND do Arduino
  *    Botões: SW1 -> D6, SW2 -> D7. Joysticks no +5V e GND do Arduino; servos na fonte externa (GND comum).
- *  Pinagem de 2026-11-07: os 9 sinais ocupam D2..D10 EM SEQUÊNCIA - D2 D3 D4 D5 = servos S1..S4,
- *  D6 D7 = botões SW1/SW2, D8 D9 D10 = LED RGB. Contando do RX<-0: do 3º ao 8º furo do bloco 0-7 e do
- *  1º ao 3º do bloco 8-13. Ficam livres os pinos 0 e 1 (RX/TX, não usar) e D11, D12, D13.
+ *  Pinagem de 2026-11-20 (= a do firmware oficial desde 19/11): S1 em D12 e S4 em D13; S2 e S3
+ *  seguem em D3 e D4, botões SW1/SW2 em D6 e D7, LED RGB em D8 D9 D10. Ficam livres os pinos 0 e 1
+ *  (RX/TX, não usar), D2, D5 e D11.
+ *  ATENÇÃO AO D13: é o pino do LED da placa, que tem LED + resistor em paralelo com o sinal, e o
+ *  bootloader o pulsa como SCK a cada reset e a cada gravação - a GARRA dá um tranco de ~1 s ao ligar
+ *  ou ao gravar, então GRAVE COM A GARRA VAZIA (um objeto preso pode ser apertado ou escapar). Se o
+ *  S4 tremer ou não responder, D5 e D11 estão livres: basta trocar PINO[3].
+ *  Pinagem anterior (07/11 a 19/11): servos em D2 D3 D4 D5. Se o braço ainda estiver fiado assim,
+ *  é S1 e S4 que ficam sem sinal - refie ou volte PINO[] para { 2, 3, 4, 5 }.
  *  O firmware do braço (braco_robotico.ino) usa exatamente os mesmos pinos: trocar de sketch não refia nada.
  *  O pulso usa a mesma escala do firmware do braço: 600 µs = 0°, 2400 µs = 180° (10 µs por grau).
  * ============================================================================
@@ -92,7 +103,8 @@ const uint16_t PERIODO_MS   = 20;       // passo da rampa (50 Hz, o mesmo perío
 const uint16_t PAUSA_MS     = 1000;     // parada em cada ponto do teste automático e da varredura
 
 const uint8_t N_SERVOS = 4;
-const uint8_t PINO[N_SERVOS]      = {   2,   3,   4,   5 };
+const uint8_t PINO[N_SERVOS]      = {  12,   3,   4,  13 };   // 20/11/2026: S1 em D12 e S4 em D13
+                                                              // (era 2,3,4,5) - ver cabecalho
 const char*   NOME[N_SERVOS]      = { "S1 base", "S2 ombro", "S3 cotovelo", "S4 garra" };
 //                                    base  ombro  cotovelo garra
 uint8_t       limiteMin[N_SERVOS] = {   0,    0,     0,     50 };   // limites medidos na bancada
@@ -113,7 +125,8 @@ const int     RUIDO_MAX  = 40;          // ...com as 16 leituras variando no má
 
 // LED RGB de estados: 3 pinos em liga/desliga = 7 cores. Nao usa analogWrite de proposito: a Servo ocupa
 // o Timer1 do AVR, que e o gerador de PWM de D9 e D10 - exatamente os pinos de G e B. Em digitalWrite nao
-// ha conflito nenhum, e D8/D9/D10 estao livres tanto aqui quanto no firmware do braco.
+// ha conflito nenhum, e D8/D9/D10 estao livres tanto aqui quanto no firmware do braco (o D13, que o
+// S4 passou a usar em 20/11, NAO e usado pelo LED deste sketch - nao ha dois escritores no mesmo pino).
 // Prefixo PIN_RGB_ de proposito: PIN_LED, LEDR, LEDG e LEDB sao macros de placa em varias placas
 // (no UNO R4 "const uint8_t PIN_LED = 13;" nem compila) e o nome colidiria com a macro.
 const uint8_t PIN_RGB_R = 8, PIN_RGB_G = 9, PIN_RGB_B = 10;
