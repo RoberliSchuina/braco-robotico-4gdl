@@ -397,9 +397,9 @@ O projeto passa a ter **3 .ino**: oficial, bancada (histórico) e este, de diagn
   das alavancas (está em {12,3,4,13} para casar com o hardware atual).
 - **A tela fica QUIETA de propósito** (corrigido em 20/11, 2º pedido do usuário: "os valores
   continuam aparecendo no monitor, não consigo copiar"). A 1ª versão imprimia 4 linhas/s e o
-  monitor nunca parava. Agora a leitura ao vivo começa DESLIGADA ( liga), sai 1 linha por eixo
-  na primeira vez que ele responde, e o  imprime um bloco estático entre "COPIE DAQUI" e
-  "COPIE ATE AQUI" terminando numa linha **RESUMO** (, repouso/variação)
+  monitor nunca parava. Agora a leitura ao vivo começa DESLIGADA (`v` liga), sai 1 linha por eixo
+  na primeira vez que ele responde, e o `r` imprime um bloco estático entre "COPIE DAQUI" e
+  "COPIE ATE AQUI" terminando numa linha **RESUMO** (`A0(S1)=512/0:PARADO`, repouso/variação)
   curta o bastante para transcrever à mão. **Lição para sketch de diagnóstico: não streamar** —
   quem está na bancada precisa do número parado na tela, não rolando.
 - **Como ler o resultado**: A0/A2 parados -> fiação do VRx (fio solto/trocado/furo errado, ou
