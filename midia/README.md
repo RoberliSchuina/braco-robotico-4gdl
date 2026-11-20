@@ -10,7 +10,8 @@ Registro do braço montado e operando, feito em 20/11/2026.
 |---|---|
 | `braco_robotico_demo.mp4` | Vídeo editado — 1920×1080, 30 fps, 2 min 27 s, 46 MB |
 | `fotos/` | 12 fotos do protótipo (4000 × 1848, originais do celular) |
-| `capa.jpg` | Quadro de abertura usado acima |
+| `capa.jpg` | Quadro de abertura usado acima (quadro em 1:15 do vídeo, 1280 px) |
+| `destaque.jpg` | Foto que abre o `README.md` da raiz — `fotos/20261120_163259.jpg` reduzida a 1600 px (281 kB, porque a original tem 2 MB e todo visitante do repositório baixa a imagem); gerada por `preparar_fotos.py` |
 
 ## O vídeo
 

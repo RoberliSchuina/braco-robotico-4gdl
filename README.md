@@ -1,5 +1,9 @@
 # Braço Robótico 4 GDL — Sistemas Embarcados (FAESA, 2026/2)
 
+![Protótipo montado, visto de cima: à esquerda o controle com os dois joysticks KY-023; ao centro o Arduino UNO e a protoboard sobre a base de acrílico; à direita a base giratória e o braço estendido com a garra aberta](midia/destaque.jpg)
+
+*Protótipo montado e em operação (20/11/2026). Mais fotos e o vídeo de demonstração em [`midia/`](midia/README.md).*
+
 | Entrega | Onde está |
 |---|---|
 | Lista de componentes | `relatorio/Relatorio_Braco_Robotico.docx` (seção 4) |

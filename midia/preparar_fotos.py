@@ -69,4 +69,21 @@ for nome in sorted(os.listdir(DESTINO)):
         if o != 1:
             ruins.append((nome, o))
 print("conferencia:", "OK - todas com orientacao 1" if not ruins else ruins)
+
+# versao leve para abrir o README da raiz: a foto escolhida tem 4000 px e ~2 MB,
+# e o README e a primeira pagina do repositorio (todo visitante baixa a imagem).
+DESTAQUE_ORIGEM = "20261120_163259.jpg"   # vista de cima com o conjunto inteiro
+DESTAQUE_LARGURA = 1600
+
+cam = os.path.join(DESTINO, DESTAQUE_ORIGEM)
+if os.path.exists(cam):
+    im = Image.open(cam)
+    alt = round(im.height * DESTAQUE_LARGURA / im.width)
+    im.resize((DESTAQUE_LARGURA, alt), Image.LANCZOS).save(
+        os.path.join(AQUI, "destaque.jpg"), "JPEG", quality=88, optimize=True)
+    print("destaque.jpg: %dx%d  %.0f kB"
+          % (DESTAQUE_LARGURA, alt, os.path.getsize(os.path.join(AQUI, "destaque.jpg")) / 1024))
+else:
+    print("AVISO: %s nao encontrada, destaque.jpg nao foi gerada" % DESTAQUE_ORIGEM)
+
 sys.exit(1 if ruins else 0)
