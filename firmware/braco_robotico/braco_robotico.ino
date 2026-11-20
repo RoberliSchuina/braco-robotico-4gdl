@@ -106,6 +106,11 @@
  *   2026-11-19  S1 -> D12 e S4 -> D13 (pedido do usuário). D2 e D5 ficaram livres e o LED simples de
  *               modo passou para o D2, porque o D13 agora é do servo S4. Limites, POS_REF, eixos dos
  *               joysticks, botões, LED RGB e o formato da EEPROM continuam iguais.
+ *   2026-11-20  BASE RELIGADA (JUNTA_LIGADA[0] = true, servo trocado): era ela que deixava o pino do
+ *               S1 sem pulso desde 29/10. Faixa da garra alinhada em 74..110 (estava 50..95, valor de
+ *               bancada com o servo solto, que fechava 23° contra as próprias mandíbulas) e
+ *               alternaGarra() passou a respeitar os limites em vigor. Pinos, POS_REF, botões, LED e
+ *               o formato da EEPROM não mudaram.
  *
  *  OPERAR COM UMA JUNTA DESLIGADA — vetor JUNTA_LIGADA[] logo abaixo da configuração:
  *    - a junta desligada NÃO recebe attach() nem pulso: o pino fica em repouso, o servo defeituoso
@@ -114,6 +119,7 @@
  *    - 'p' e 'd' mostram a junta como DESLIGADA, os comandos que a moveriam avisam e o LED fica AMARELO;
  *    - a reprodução e a volta à referência seguem funcionando com as juntas restantes.
  *    PARA RELIGAR depois de trocar o servo: JUNTA_LIGADA[0] = true (e recalibrar o horn da base em 90°).
+ *    EM 20/11/2026 as 4 juntas estão LIGADAS: o vetor fica aqui para o próximo servo que falhar.
  * ============================================================================
  */
 #include <Servo.h>
@@ -158,11 +164,15 @@ const uint16_t LAMPEJO_MS = 400;        // duração do lampejo de evento
 //              a partir de 148° (varredura booleana; no braço em si só toca a 160°). Como o sentido do servo só
 //              se conhece na calibração, o limite é simétrico: depois de calibrar, o lado "esticado" pode ir a
 //              20° e o lado "dobrado" NUNCA deve passar de 145°
-//   garra    : 72..110 — as mandíbulas se tocam em ~72,5° (horn montado a 75° = dedos paralelos); abaixo disso
-//              o servo fica em travamento (stall) permanente
+//   garra    : 74..110 — as mandíbulas se tocam a 73,0° (medido em passos de 0,25° por
+//              cad/verificacao.py, com o horn montado a 75° = dedos paralelos); abaixo disso o servo
+//              fica em travamento (stall) permanente contra a própria garra. 74 deixa 1° de margem.
+//              20/11/2026: estava 50..95, que eram os limites medidos na BANCADA com o servo SOLTO
+//              (commit 0f606d5) e vieram para cá por engano — montado, fechar até 50° joga o servo
+//              23° para dentro do batente. Decisão do usuário em 20/11: vale a faixa do CAD.
 //                             base   ombro  cotovelo garra
-uint8_t ANG_MIN[N_JUNTAS]  = {   5,    15,    40,    50 };
-uint8_t ANG_MAX[N_JUNTAS]  = { 175,   165,   140,   95 };
+uint8_t ANG_MIN[N_JUNTAS]  = {   5,    15,    40,    74 };
+uint8_t ANG_MAX[N_JUNTAS]  = { 175,   165,   140,   110 };
 
 // POSIÇÃO DE REFERÊNCIA (pose de repouso, também chamada de "home"): é onde o braço é inicializado no
 // setup() e para onde ele volta sempre que se aperta o botão do joystick 2 (toque curto) ou se envia 'h'.
@@ -187,10 +197,14 @@ const uint8_t GARRA_FECHADA = 74, GARRA_ABERTA = 110;   // 74 ≈ 2 mm de vão; 
 // JUNTAS EM USO — false = junta desligada (servo com defeito, ausente ou ainda não montado).
 // A junta desligada não recebe attach() nem pulso: o pino de sinal fica em repouso (INPUT), o servo não
 // zumbe nem trava, o eixo do joystick dela fica inerte e as outras juntas funcionam normalmente.
-// 2026-10-29: a BASE (S1 em D12, eixo A0) está desligada por defeito no servo. Trocado o servo, volte
-// este valor para true, monte o horn com a junta em 90° e refaça a calibração de ANG_MIN/ANG_MAX.
+// 2026-10-29: a BASE (S1, eixo A0) foi DESLIGADA aqui por defeito no servo.
+// 2026-11-20: servo trocado/testado -> base RELIGADA. O braço volta a operar com as 4 juntas.
+//   Era esta linha que fazia "o pino S1 não enviar sinal": sem attach(), o D12 nunca pulsa.
+//   Montar o horn da base com a junta em 90° e refazer a calibração de ANG_MIN/ANG_MAX[0].
+//   Para desligar uma junta de novo (servo queimado, ausente ou ainda não montado), é só por o false
+//   de volta na posição dela: nada mais no firmware precisa mudar.
 //                                    base   ombro  cotovelo garra
-const bool JUNTA_LIGADA[N_JUNTAS] = { false,  true,   true,   true };
+const bool JUNTA_LIGADA[N_JUNTAS] = {  true,  true,   true,   true };
 
 // ------------------------------------------------------------ tipos e estado
 // (todos os tipos vêm antes da primeira função: a Arduino IDE gera os protótipos no topo do arquivo)
@@ -622,7 +636,10 @@ void alternaGarra() {
   if (modo == REPRODUZINDO) pararReproducao();                // senão a reprodução sobrescreve o alvo
   paraSequencia(false);
   bool aberta = alvo[GARRA] > (GARRA_FECHADA + GARRA_ABERTA) / 2;
-  alvo[GARRA] = aberta ? GARRA_FECHADA : GARRA_ABERTA;
+  // passa por limita() como vaiParaReferencia(): ANG_MIN/ANG_MAX não são mais const (o comando
+  // 'limite' os muda em tempo real), então o atalho do botão não pode furar a faixa em vigor
+  uint8_t destino = aberta ? GARRA_FECHADA : GARRA_ABERTA;
+  alvo[GARRA] = limita(destino, limInf(GARRA), limSup(GARRA));
   Serial.println(aberta ? F("Garra: fechando") : F("Garra: abrindo"));
 }
 

@@ -42,9 +42,10 @@ Entregas: BOM, peças 3D (Tinkercad, uma por arquivo) + STL, protótipo montado,
   repinagem NÃO resolveu S1/S4. O teste provou que **os 4 eixos de joystick estão bons** e a causa
   do S1 é **`JUNTA_LIGADA[0] = false`** (contorno de 29/10 para o servo da base com defeito): sem
   `attach()`, sem pulso no D12. Ver "S1 mudo = JUNTA_LIGADA[0]"
-- [ ] 2026-11-20: **decidir se o servo S1 foi trocado** -> se sim, `JUNTA_LIGADA[0] = true`.
-  E **S4/garra em aberto**: suspeita de `ANG_MIN[3] = 50` fechando 23° contra as próprias
-  mandíbulas (tocam a 73°). Pendente o teste `m` (espelho) do sketch de diagnóstico
+- [x] 2026-11-20: **BASE RELIGADA e faixa da garra alinhada** (decisões do usuário): servo S1 trocado
+  -> `JUNTA_LIGADA[0] = true` (as 4 juntas em uso), e a garra passou de 50..95 para
+  **74..110**, a faixa do CAD. `alternaGarra()` agora passa por `limita()`.
+  62 % flash / 32 % RAM no UNO. **Pendente: montar o horn da base em 90° e calibrar ANG_MIN/MAX[0]**
 - [x] 2026-11-12: **plataforma giratória para MG996R** (peça 12, NOVA, não substitui a 02) + **cálculo de carga máxima**; ver "Plataforma para MG996R"
 - [ ] O usuário vai acrescentar fotos e vídeos do projeto em funcionamento
 - [ ] Medir o DSN-VC288 recebido, ajustar `VC288_JANELA` e regerar ANTES de mandar cortar
@@ -135,7 +136,8 @@ Armadilha de ambiente: patches via `python - <<'EOF'` (heredoc) no Git Bash às 
 - `passoReproducao()` limita cada pose a ANG_MIN/MAX (pose fora da faixa congelava a reprodução).
 - Rampa: `velMax` graus por passo de 20 ms. Servo.attach(pin, **600, 2400**). Se um bloqueio atrasar > 3 períodos, `tUltimo = agora`.
 - Armadilha Arduino IDE: `struct Botao` precisa vir antes de qualquer função.
-- **`POS_REF` = {90,90,90,90}** (antes chamada `ANG_HOME`; renomeada em 2026-10-01 — `cad/mapa_angulos.py` lê esse símbolo do .ino por regex e a chave do JSON/manual virou `POS_REF`). Justificativa de cada valor está no comentário do .ino; é a pose de encaixe dos horns, mudar obriga a remontar. `vaiParaReferencia()` passa por `limita()` e devolve o modo para MANUAL. Limites **{5,15,40,72}..{175,165,140,110}**; garra: 74 = fechada, 110 = aberta. Montar os horns com os servos em 90° (garra 75°); estriado de ~21 dentes → erro de indexação até ±8,6°, por isso ANG_MIN/MAX são sempre de bancada.
+- **`POS_REF` = {90,90,90,90}** (antes chamada `ANG_HOME`; renomeada em 2026-10-01 — `cad/mapa_angulos.py` lê esse símbolo do .ino por regex e a chave do JSON/manual virou `POS_REF`). Justificativa de cada valor está no comentário do .ino; é a pose de encaixe dos horns, mudar obriga a remontar. `vaiParaReferencia()` passa por `limita()` e devolve o modo para MANUAL. Limites **{5,15,40,74}..{175,165,140,110}** (a garra era 72 e virou **74** em 20/11: as mandíbulas se
+tocam a 73,0°, e de 29/10 a 19/11 o firmware chegou a carregar os 50..95 da bancada por engano); garra: 74 = fechada, 110 = aberta. Montar os horns com os servos em 90° (garra 75°); estriado de ~21 dentes → erro de indexação até ±8,6°, por isso ANG_MIN/MAX são sempre de bancada.
 
 ## Revisão de viabilidade — conclusões que não estão no código
 - Veredito: executável. Torque (corpo livre com as massas reais das malhas, MG90S = 13,4 g, SG90 = 9 g): ombro **0,52 kgf·cm vazio (29 % do stall 1,8 a 5 V)**; +25 g → 0,97 (54 %); +50 g → 1,43 (79 %). Cotovelo 39 % com 50 g. Carga útil ≈ **20 g estendido** (50 % do stall), ≈ 30 g a 60 %, ≈ 65 g com o braço recolhido.
@@ -375,7 +377,7 @@ do eixo do ombro. Resultados em `cad/carga_maxima.json`.
   (593 g) < estrutura. Para subir de verdade a carga é preciso trocar **S3 junto** e dar atrito às
   mandíbulas.
 
-## S1 mudo = JUNTA_LIGADA[0] (2026-11-20, RESOLVIDO no diagnóstico)
+## S1 mudo = JUNTA_LIGADA[0] (2026-11-20, CORRIGIDO)
 **A causa do S1 é o próprio `JUNTA_LIGADA[0] = false` da linha 193 do firmware oficial**, posto em
 2026-10-29 porque o servo da base estava com defeito. Junta desligada **não recebe `attach()`** -> o
 pino fica em repouso e **nenhum pulso sai do D12**, que é literalmente o sintoma relatado ("a porta
@@ -413,9 +415,22 @@ fora parece "servo morto". A seção "Decisões de projeto" ainda documenta 72..
 e manda **subir ANG_MIN[3] para 73/74 na calibração**; o firmware contradiz isso hoje.
 **NÃO mexido por conta própria**: 50..95 foi ajuste de bancada do próprio usuário e só ele sabe se o
 horn da garra ficou indexado diferente (estriado de 21 dentes = ±8,6° de erro possível).
-**Próximo teste, que decide**: no sketch de diagnóstico, comando **`m`** (espelho) — ele pulsa os 4
-pinos sem `JUNTA_LIGADA`, sem calibração e dentro de 74..110 na garra. Quem seguir a alavanca ali
-tem servo, pino e fio bons, e o problema é só de configuração do firmware.
+### O que foi corrigido em 20/11 (as duas decisões foram do usuário)
+1. **`JUNTA_LIGADA[0] = true`** — ele confirmou que o servo da base foi trocado/testado. O D12
+   volta a pulsar e o braço opera com 4 juntas. **Falta montar o horn da base em 90° e calibrar
+   ANG_MIN/ANG_MAX[0]**: ao energizar, o setup leva a base para POS_REF = 90° sem saber onde ela está.
+2. **Garra 50..95 -> 74..110.** Havia uma **inconsistência real** no firmware: `ANG_MIN/ANG_MAX[3]`
+   estavam com os valores de bancada (50..95, servo solto, commit 0f606d5) enquanto
+   `GARRA_FECHADA/GARRA_ABERTA` seguiam 74/110 — então o joystick alcançava só 50..95 e o toque
+   longo do SW2 saltava para 74/110, **fora da própria faixa**. Agora os quatro valores concordam.
+   De quebra, `alternaGarra()` passou a filtrar por `limita(destino, limInf, limSup)`, como
+   `vaiParaReferencia()` já fazia: desde a fusão de 09/11 ANG_MIN/MAX **não são mais `const`**
+   (o comando `limite` os muda em tempo real), logo o atalho do botão podia furar a faixa em vigor.
+**Atenção**: o sketch de bancada `teste_braco_09.11.ino` continua com 50..95 de propósito (é o
+arquivo de referência histórica, e lá o servo é medido solto). Com as engrenagens montadas, NÃO levar
+a garra ao fim de curso de fechamento naquele sketch.
+**Em aberto**: A2 em 630 no repouso (alavanca J2 enviesada; passa na calibração, curso assimétrico) e
+confirmar na bancada que a base e a garra passaram a se mover.
 
 ## Histórico da investigação de 20/11 (hipótese descartada)
 Depois da repinagem para D12/D13 o usuário voltou: "s1 e s4 continuam não funcionando, sei que o
