@@ -31,15 +31,25 @@
  *
  *  COMO USAR
  *  1. Grave e abra o Monitor Serial em 115200 bps.
- *  2. Não toque em nada: confira se os 4 valores estão perto de 512.
+ *  2. Não toque em nada: ele imprime o centro de repouso dos 4 eixos e
+ *     fica QUIETO. A medição continua rodando em silêncio, a 50 Hz.
  *  3. Mova UMA alavanca de cada vez até o fim de curso, nos dois sentidos.
- *     Cada eixo que responder é anunciado na hora ("RESPONDEU").
+ *     Só sai UMA linha por eixo, quando ele responde pela primeira vez.
  *  4. Aperte os dois botões (SW = apertar a própria alavanca para baixo).
- *  5. Mande 'r' para o relatório final, que diz quais eixos nunca se moveram.
+ *  5. Mande 'r': o relatório sai num bloco que PARA na tela, com tudo o que
+ *     interessa (repouso, mínimo, máximo, variação e veredito por eixo).
+ *     Pode selecionar com o mouse e copiar com Ctrl+C. A última linha do
+ *     bloco é um RESUMO de uma linha, se for mais fácil transcrever.
+ *
+ *  A tela NÃO rola sozinha de propósito: a versão anterior deste sketch
+ *  imprimia 4 linhas por segundo e não dava para copiar nada. Se quiser ver
+ *  os números ao vivo enquanto mexe na alavanca, mande 'v' (e 'v' de novo
+ *  para calar). O relatório não depende disso.
  *
  *  COMANDOS (uma letra, sem fim de linha obrigatório)
- *    r   relatório: tabela de mínimo/máximo por eixo + veredito
+ *    r   relatório: tabela de mínimo/máximo por eixo + veredito + resumo
  *    z   zera os mínimos e máximos e começa a medir de novo
+ *    v   liga/desliga a leitura ao vivo (começa DESLIGADA: tela quieta)
  *    m   liga/desliga o espelho nos servos (começa DESLIGADO: nenhum pulso)
  *
  *  O ESPELHO ('m') é opcional e serve para o segundo teste: cada eixo passa a
@@ -100,6 +110,9 @@ Servo servo[N];
 bool  espelho = false;
 int   pos[N];
 
+bool  aoVivo = false;          // leitura ao vivo DESLIGADA por padrão: a tela precisa ficar parada
+                               // para o relatório poder ser selecionado e copiado
+
 uint32_t tAmostra = 0, tImprime = 0;
 bool     swAnterior[2] = { false, false };
 
@@ -132,6 +145,7 @@ void imprimeRepouso() {
 
 void relatorio() {
   Serial.println();
+  Serial.println(F("vvvvvvvvvvvvvv COPIE DAQUI vvvvvvvvvvvvvv"));
   Serial.println(F("---------------- RELATORIO ----------------"));
   Serial.println(F("eixo        junta         repouso  minimo  maximo  variacao  veredito"));
   uint8_t mudos = 0;
@@ -159,7 +173,21 @@ void relatorio() {
     Serial.println(F("  3. troque o fio do eixo parado pelo de um que responde: se o"));
     Serial.println(F("     defeito mudar de eixo, e fio/furo; se ficar, e o modulo."));
   }
+  Serial.print(F("RESUMO "));
+  for (uint8_t i = 0; i < N; i++) {
+    Serial.print(' ');
+    Serial.print(EIXO[i][0]); Serial.print(EIXO[i][1]);   // "A0", "A1", ...
+    Serial.print('(');
+    Serial.print(NOME[i][0]); Serial.print(NOME[i][1]);   // "S1", "S2", ...
+    Serial.print(F(")="));
+    Serial.print(repouso[i]); Serial.print('/');
+    Serial.print(maximo[i] - minimo[i]);
+    Serial.print((maximo[i] - minimo[i]) >= VARIACAO_OK ? F(":ok") : F(":PARADO"));
+  }
+  Serial.println();
+  Serial.println(F("(cada eixo acima vem como repouso/variacao)"));
   Serial.println(F("-------------------------------------------"));
+  Serial.println(F("^^^^^^^^^^^^^^ COPIE ATE AQUI ^^^^^^^^^^^^^^"));
   Serial.println();
 }
 
@@ -213,7 +241,9 @@ void setup() {
   imprimeRepouso();
   zeraMedicao();
   Serial.println(F("Mova UMA alavanca de cada vez ate o fim de curso, nos dois sentidos."));
-  Serial.println(F("Comandos:  r = relatorio   z = zera min/max   m = espelho nos servos"));
+  Serial.println(F("A tela fica QUIETA (so 1 linha por eixo, quando ele responde): a medicao"));
+  Serial.println(F("segue rodando. Quando terminar, mande 'r' e copie o bloco do relatorio."));
+  Serial.println(F("Comandos:  r = relatorio   z = zera   v = leitura ao vivo   m = espelho"));
   Serial.println();
 }
 
@@ -224,6 +254,11 @@ void loop() {
     if (c == 'r' || c == 'R') relatorio();
     else if (c == 'z' || c == 'Z') zeraMedicao();
     else if (c == 'm' || c == 'M') ligaEspelho(!espelho);
+    else if (c == 'v' || c == 'V') {
+      aoVivo = !aoVivo;
+      Serial.println(aoVivo ? F("Leitura ao vivo LIGADA ('v' para calar).")
+                            : F("Leitura ao vivo desligada: tela quieta, medicao continua."));
+    }
   }
 
   uint32_t agora = millis();
@@ -257,7 +292,7 @@ void loop() {
   }
 
   // ------------------------------------------------ linha de leitura
-  if (agora - tImprime >= IMPRIME_MS) {
+  if (aoVivo && agora - tImprime >= IMPRIME_MS) {
     tImprime = agora;
     for (uint8_t i = 0; i < N; i++) {
       Serial.print(EIXO[i][0]); Serial.print(EIXO[i][1]);   // "A0", "A1", ...
