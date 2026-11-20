@@ -42,6 +42,9 @@ Entregas: BOM, peças 3D (Tinkercad, uma por arquivo) + STL, protótipo montado,
   repinagem NÃO resolveu S1/S4. O teste provou que **os 4 eixos de joystick estão bons** e a causa
   do S1 é **`JUNTA_LIGADA[0] = false`** (contorno de 29/10 para o servo da base com defeito): sem
   `attach()`, sem pulso no D12. Ver "S1 mudo = JUNTA_LIGADA[0]"
+- [x] 2026-11-20: **A2 (eixo da garra) medido EM ABERTO** por `firmware/teste_a2/` (teste de pull-up
+  com os outros 3 canais de controle). NÃO é software — ver "S4 (garra): A2 EM ABERTO". O usuário
+  também ajustou os limites na IDE para garra **50..100** e ombro **15..120**, commitados como estão
 - [x] 2026-11-20: **BASE RELIGADA e faixa da garra alinhada** (decisões do usuário): servo S1 trocado
   -> `JUNTA_LIGADA[0] = true` (as 4 juntas em uso), e a garra passou de 50..95 para
   **74..110**, a faixa do CAD. `alternaGarra()` agora passa por `limita()`.
@@ -404,7 +407,37 @@ com o fato já escrito neste arquivo e no cabeçalho do .ino.
   (CENTRO_TOL = 150), então o eixo NÃO é reprovado — mas a alavanca está enviesada e o curso útil
   fica assimétrico (630 counts para um lado, 393 para o outro). Vale olhar a montagem do módulo J2.
 
-### S4 (garra) — ainda em aberto, e o suspeito não é o sinal
+### S4 (garra): A2 EM ABERTO — medido, não deduzido (20/11, DEFINITIVO)
+O usuário insistiu três vezes que era software ("tenho certeza que é o software, corrija de forma
+definitiva"). Em vez de repetir a hipótese, foi feito um **teste que decide**:
+`firmware/teste_a2/teste_a2.ino` liga o **pull-up interno** (~36 k) de cada canal e compara.
+Com um pot de 10 k ligado, o pull-up desloca a leitura algumas dezenas de counts e ela **volta na
+hora**; com o pino em aberto, crava em 1023 e **decai devagar**. Resultado, repetido em 3 blocos:
+
+| canal | bruto | descarte | média | espalha | **pull-up** | solto | +20 ms |
+|---|---|---|---|---|---|---|---|
+| A0 base | 518 | 517 | 517 | 1 | **563** | 518 | 518 |
+| A1 ombro | 501 | 501 | 500 | 4 | **549** | 501 | 501 |
+| **A2 garra** | 730 | 737 | 720 | **40..55** | **1023** | **1023** | **1000 / 826** |
+| A3 cotovelo | 507 | 508 | 507 | 3 | **568** | 508 | 510 |
+
+- **Veredito: o A2 está em circuito aberto.** Nada segura o pino. Os três canais bons sobem ~45–60
+  counts com o pull-up e voltam instantaneamente; o A2 vai a 1023 e decai sozinho.
+- **A coluna `descarte` mata a hipótese de software**: se fosse artefato do multiplexador do ADC
+  (capacitor de amostragem guardando a carga do canal anterior — o A3, em ~510, que é exatamente onde
+  o A2 orbitava), a leitura-fantasma teria estabilizado. Não estabilizou (730 -> 737, 583 -> 586).
+- **Lição de método**: quando o usuário e a evidência discordam, construir o teste que separa as duas
+  hipóteses **com um controle no mesmo sketch** (aqui, 3 canais bons passando pelo mesmo código).
+  Foi o que encerrou a discussão; opinião repetida não encerrava.
+- **Conserto**: reconectar o VRx do J2 ao A2. Suspeitos, nessa ordem: jumper partido por dentro, fio
+  no furo errado, ou **fio no pino SW do KY-023 em vez do VRx** (o SW é uma chave aberta, sem pull-up
+  no módulo = exatamente um pino em aberto). Teste que separa: trocar VRx e VRy **na ponta do
+  módulo** — se o defeito migrar para o cotovelo, o pino VRx do módulo é que está morto.
+- **Enquanto o fio não volta, a garra JÁ opera**: `a`, `s 3 <ang>`, `teste 3` e o toque longo do SW2
+  não passam pelo eixo analógico. O `(OFF)` desliga só o comando por joystick.
+- NÃO afrouxar `RUIDO_MAX`: com ±130 counts e zona morta de ±60, a garra andaria sozinha.
+
+### Histórico: a suspeita anterior (limites), descartada
 `JUNTA_LIGADA[3] = true` e `eixoAtivo[3]` passa, logo **o D13 recebe pulso e o código não bloqueia
 nada**. O suspeito é mecânico-de-limite: o firmware oficial está com
 **`ANG_MIN[3] = 50` e `ANG_MAX[3] = 95`** (linhas 164/165), que são os valores de **bancada** do
