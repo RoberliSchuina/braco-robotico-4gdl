@@ -50,7 +50,9 @@ Entregas: BOM, peças 3D (Tinkercad, uma por arquivo) + STL, protótipo montado,
   **74..110**, a faixa do CAD. `alternaGarra()` agora passa por `limita()`.
   62 % flash / 32 % RAM no UNO. **Pendente: montar o horn da base em 90° e calibrar ANG_MIN/MAX[0]**
 - [x] 2026-11-12: **plataforma giratória para MG996R** (peça 12, NOVA, não substitui a 02) + **cálculo de carga máxima**; ver "Plataforma para MG996R"
-- [ ] O usuário vai acrescentar fotos e vídeos do projeto em funcionamento
+- [x] 2026-11-20: **fotos e vídeo do protótipo em funcionamento** em `midia/` (12 fotos +
+  `braco_robotico_demo.mp4`, 1080p, 2 min 27 s, 46 MB). O bruto (7 clipes 8K, 1,4 GB) ficou
+  **fora do git**; ver "Mídia do protótipo"
 - [ ] Medir o DSN-VC288 recebido, ajustar `VC288_JANELA` e regerar ANTES de mandar cortar
 - [ ] Regerar esquema elétrico, guia HTML, BOM, relatório e manual com a base (medidor, chave, fusível, WAGO, 2 pontos de alimentação por trilho)
 - [ ] Imprimir, montar, calibrar `ANG_MIN/ANG_MAX` e registrar os testes na seção 9.3
@@ -68,6 +70,9 @@ python cad/base_suporte.py       # ~20 s: chapa de acrílico -> DXF/SVG de corte
 python cad/plataforma_mg996r.py  # ~40 s: peça 12 (plataforma para MG996R) -> STL + imagens/ + info.json
 python cad/carga_maxima.py       # ~1 min: carga útil por cenário de servo -> cad/carga_maxima.json
 python cad/mapa_angulos.py       # ~1 min: ângulo de cada servo -> pose/altura/alcance -> cad/mapa_angulos.json
+python midia/preparar_fotos.py   # ~5 s: fotos do celular -> midia/fotos/ (grava a rotação do EXIF)
+python midia/gerar_cartoes.py    # ~2 s: cartões e legendas do vídeo -> midia/cartoes/*.png
+python midia/gerar_video.py      # ~9 min: proxies 1080p + montagem -> midia/braco_robotico_demo.mp4
 python cad/gerar_esquema.py      # -> imagens/esquema_eletrico.png
 python cad/reembute_esquema.py   # reembute o PNG no Circuito_Braco_Robotico.html (rodar SEMPRE depois)
 python relatorio/gerar_relatorio.py
@@ -502,6 +507,43 @@ O projeto passa a ter **3 .ino**: oficial, bancada (histórico) e este, de diagn
   ou alargar CENTRO_TOL), **não** nos pinos. 3,3 V no módulo dá centro ~337 e também reprova.
 - Suspeita menos provável, mas de graça conferir: **VRx e VRy trocados nos dois módulos** — aí os
   4 eixos leriam, mas a alavanca que o usuário julga ser de S1 comandaria S2.
+
+## Mídia do protótipo (`midia/`, 2026-11-20)
+Pedido do usuário: "edite um vídeo considerando os arquivos da pasta `Fotos e videos/Photos-1-001`"
+e publique fotos e vídeo no GitHub. Entrou em `midia/` (README próprio com a tabela de legendas):
+`braco_robotico_demo.mp4` (1920×1080, 30 fps, 2 min 27 s, 46 MB), `fotos/` (12) e `capa.jpg`.
+
+- **O bruto NÃO está no git**: 7 clipes **8K HEVC (7680×4320, 80 Mbps)** + 12 fotos = 1,4 GB, mais um
+  zip de 1,44 GB. `Fotos e videos/` inteira foi para o `.gitignore` — um único clipe (411 MB) já
+  estoura o **limite rígido de 100 MB por arquivo** do GitHub. A taxa do vídeo final foi calibrada
+  (CRF 23, teto 3500 kbps) para ficar **abaixo dos 50 MB** em que o GitHub começa a avisar.
+- **`drawtext` do ffmpeg dá segmentation fault nesta máquina** (`Fontconfig error: Cannot load default
+  config file`), mesmo passando `font=Arial`. Por isso **todo texto do vídeo é rasterizado em PNG por
+  `midia/gerar_cartoes.py`** (PIL + Segoe UI) e entra por `overlay`. Vale para qualquer uso futuro de
+  drawtext: ou `fontfile=` com caminho absoluto, ou — melhor — PNG com alfa.
+- **O filtergraph passa de 6 kB** e não cabe na linha de comando do Windows: vai em arquivo, por
+  `-filter_complex_script`.
+- **Clipes 1 e 2 foram filmados em RETRATO** (rotação −90 no metadado), os outros cinco em paisagem.
+  Os dois primeiros recebem fundo desfocado do próprio quadro (cópia ampliada + `gblur`) em vez de
+  tarjas pretas, e a linha do tempo inteira fica 16:9.
+- **Decodificar 8K custa ~3× o tempo real** → etapa de **proxy** 1080p (`midia/proxy/`, ignorada pelo
+  git, ~6 min): sem ela, cada ajuste de legenda redecodificaria 1,4 GB. A montagem final é uma
+  passagem única sobre os proxies.
+- **Fotos: a rotação vinha só na etiqueta EXIF** (10 das 12; **5 delas a 180°**, orientação 3, e 5 a
+  90°, orientação 6). Navegador respeita, **Word e `python-docx` não** — metade entraria de cabeça
+  para baixo no relatório. `midia/preparar_fotos.py` grava a rotação nos pixels e zera a etiqueta,
+  reencodando com as **tabelas de quantização da origem** (`qtables=im.quantization` +
+  `subsampling=get_sampling(im)`) para não perder qualidade; as 2 já corretas são copiadas byte a
+  byte. Armadilha: `subsampling="keep"` **não** funciona depois de `ImageOps.exif_transpose()`
+  ("Cannot use 'keep' when original image is not a JPEG").
+- **Áudio**: o original das filmagens foi mantido (ruído de servo e ambiente), com +6 dB e limitador,
+  porque a gravação é baixa (média ≈ −35 dB). Conferido depois: pico do canal esquerdo −11,5 dB e
+  **2 amostras isoladas** a 0 dB no direito (flat factor 0) = overshoot do AAC, não clipping.
+- Armadilha de processo desta sessão: `nohup ... &` **dentro** de um comando já em segundo plano faz o
+  wrapper sair com código 0 na hora, e o `ffmpeg` continua rodando — o MP4 fica sem `moov atom` se for
+  lido nesse meio-tempo. Rodar em segundo plano uma vez só, sem `nohup`.
+- `sed -i` com `Ç` **come as barras invertidas** (virou `00c700c3`); para texto com escapes
+  Unicode, usar a ferramenta de edição, não `sed`.
 
 ## Pendências / ideias de revisão
 - Possível melhoria: rolamento 623ZZ na base, mola de retorno no ombro, Bluetooth (HC-05), cinemática inversa, gravação de trajetória contínua, trava de software para a pose "abaixo da mesa".

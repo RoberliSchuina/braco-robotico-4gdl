@@ -10,3 +10,12 @@ firmware/**/build/
 *.tmp
 desktop.ini
 Thumbs.db
+
+# Midia bruta do prototipo (7 videos 8K + fotos originais, ~1,4 GB)
+# As fotos tratadas e o video editado ficam em midia/ (ver midia/README.md)
+Fotos e videos/
+
+# Intermediarios do video (regeneraveis: midia/gerar_video.py)
+midia/proxy/
+midia/cartoes/
+midia/filtro.txt

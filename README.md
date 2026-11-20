@@ -5,6 +5,7 @@
 | Lista de componentes | `relatorio/Relatorio_Braco_Robotico.docx` (seção 4) |
 | Peças 3D (uma por arquivo) + STL | `STL/01_…11_*.stl` (09 = suporte dos joysticks; 10/11 = garra alternativa em V) — importar cada uma em um projeto do Tinkercad (Importar → STL) |
 | Protótipo montado | `STL/montagem_completa.stl`, `imagens/montagem_*.png` |
+| Fotos e vídeo do protótipo **em funcionamento** | `midia/` — vídeo editado `midia/braco_robotico_demo.mp4` (1080p, 2 min 27 s) e 12 fotos em `midia/fotos/` (ver `midia/README.md`) |
 | Código Arduino IDE | `firmware/braco_robotico/braco_robotico.ino` (placa UNO; libs Servo + EEPROM) |
 | Esquema elétrico | `imagens/esquema_eletrico.png` |
 | Guia de ligações furo a furo (protoboard) | `Circuito_Braco_Robotico.html` (autocontido; abrir no navegador ou imprimir) |
