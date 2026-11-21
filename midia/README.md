@@ -33,25 +33,31 @@ O áudio é o original das filmagens (ruído dos servos e do ambiente), com ganh
 
 ## As fotos
 
-As 12 fotos são os arquivos do celular, com uma única alteração: **a rotação, que
-vinha só na etiqueta EXIF, foi gravada nos próprios pixels** (10 das 12 fotos; 5
-delas estavam a 180°). Navegador respeita EXIF, mas o Word e o `python-docx` não —
-sem isso, metade das fotos entraria de cabeça para baixo no relatório. As que já
-estavam na orientação correta foram copiadas byte a byte, sem recompressão.
+As 12 fotos estão gravadas **já na orientação certa nos pixels**, todas com a
+etiqueta EXIF Orientation = 1. Isso é necessário porque navegador e GitHub
+respeitam a etiqueta, mas o Word e o `python-docx` **não** — uma foto rotacionada
+só pela etiqueta entraria de cabeça para baixo no relatório.
+
+**A etiqueta do material bruto não é confiável.** Em 6 das 12 fotos ela pedia uma
+rotação que os pixels exportados já tinham: gravá-la virou a foto de novo, e elas
+apareceram de cabeça para baixo no GitHub. Essas 6 — `163244`, `163251`, `163253`,
+`163258`, `163259` e `163531` — foram **substituídas pelos arquivos que o autor
+corrigiu à mão** em `Fotos e videos/Photos-1-001/`, copiados byte a byte. Nas
+outras 6 a etiqueta estava certa e a rotação foi gravada nos pixels.
 
 `20261120_163538.jpg` foi **recortada à mão** (3530 × 1848) e é a que abre o
 `README.md` da raiz. Por isso `preparar_fotos.py` **não sobrescreve** o que já
 existe em `fotos/`: ele só traz do bruto o que está faltando. Para refazer tudo a
 partir do original — descartando recortes — use `--forcar`.
 
-> **Cuidado ao reabrir uma foto num editor de imagem.** Vários deles reescrevem a
-> etiqueta EXIF de rotação ao salvar, mesmo com os pixels já girados: a foto fica
-> certa no arquivo e **de cabeça para baixo no navegador e no GitHub**. Foi o que
-> aconteceu com `20261120_163244.jpg`. O script avisa quando encontra uma etiqueta
-> dessas, mas **não corrige sozinho** — nessa altura não dá para saber se os pixels
-> já estão girados ou não, e aplicar a etiqueta giraria a foto de novo. Abra a foto,
-> veja como ela está, e então apague a etiqueta (pixels certos) ou rode `--forcar`
-> (pixels crus).
+> **Nenhum programa decide orientação sozinho — é preciso olhar.** A etiqueta EXIF
+> diz como girar a foto, mas não diz se alguém já a girou antes: um export ou um
+> editor costuma gravar os pixels na posição certa e **deixar a etiqueta antiga**.
+> A foto fica certa no arquivo e **de cabeça para baixo no navegador e no GitHub**.
+> Por isso o script grava a rotação **só ao copiar do bruto** e, numa foto que já
+> existe, apenas avisa. **Depois de rodar com `--forcar`, abra as fotos e confira.**
+> Se alguma estiver virada, gire o arquivo em `Fotos e videos/Photos-1-001/` e copie
+> de lá — foi assim que as 6 erradas foram corrigidas, sem recompressão.
 
 ## Como regenerar
 

@@ -534,20 +534,28 @@ e publique fotos e vídeo no GitHub. Entrou em `midia/` (README próprio com a t
   git, ~6 min): sem ela, cada ajuste de legenda redecodificaria 1,4 GB. A montagem final é uma
   passagem única sobre os proxies.
 - **Fotos: a rotação vinha só na etiqueta EXIF** (10 das 12; **5 delas a 180°**, orientação 3, e 5 a
-  90°, orientação 6). Navegador respeita, **Word e `python-docx` não** — metade entraria de cabeça
+  90°, orientação 6) — **mas em 6 fotos essa etiqueta estava ERRADA**, ver dois itens abaixo. Navegador respeita, **Word e `python-docx` não** — metade entraria de cabeça
   para baixo no relatório. `midia/preparar_fotos.py` grava a rotação nos pixels e zera a etiqueta,
   reencodando com as **tabelas de quantização da origem** (`qtables=im.quantization` +
   `subsampling=get_sampling(im)`) para não perder qualidade; as 2 já corretas são copiadas byte a
   byte. Armadilha: `subsampling="keep"` **não** funciona depois de `ImageOps.exif_transpose()`
   ("Cannot use 'keep' when original image is not a JPEG").
-- **A etiqueta EXIF só é confiável no arquivo BRUTO** (escrita pela câmera). Depois que a foto passa
-  por um editor, ela pode estar obsoleta: vários editores **reescrevem a etiqueta ao salvar mesmo com
-  os pixels já girados** — a foto fica certa no arquivo e **de cabeça para baixo no navegador/GitHub**.
-  Aconteceu em 20/11 com `20261120_163244.jpg` (etiqueta voltou a 3 com os pixels corretos). Nessa
-  situação **não dá para decidir por programa** se os pixels estão crus ou já girados: aplicar a
-  etiqueta gira a foto de novo (erro que cometi e desfiz com `git checkout 4a0d28b -- <foto>`).
-  Por isso `preparar_fotos.py` só grava a rotação **na hora de copiar do bruto**; numa foto já
-  existente ele apenas **avisa** e pede decisão humana.
+- **A etiqueta EXIF Orientation NÃO é confiável nem no bruto** — corrigido em 20/11 às 23h; antes
+  estava escrito aqui que no bruto ela valia, e **não vale**. O export `Photos-1-001` traz parte das
+  fotos com **os pixels já girados e a etiqueta antiga**: gravar a etiqueta vira a foto de novo.
+  Resultado, **6 das 12 de cabeça para baixo no GitHub** (`163244`, `163251`, `163253`, `163258`,
+  `163259`, `163531`). **Não há padrão por valor de etiqueta**: entre as de `or=6`, três estavam
+  certas (`163305`, `163307`, `163543`) e uma errada (`163531`).
+  **Nenhum teste de programa separa "pixels crus" de "pixels já girados"** — só olhar. O que
+  funcionou em 20/11: o usuário girou os arquivos errados na própria pasta bruta ("se oriente pelas
+  fotos da pasta, modifiquei lá"); eu comparei **pixel a pixel** (miniatura cinza, 4 rotações)
+  bruto × `midia/fotos/`, montei uma **folha de contato** e **olhei** antes de sobrescrever; as 6
+  foram copiadas **byte a byte** do arquivo dele (já com `or=1`), sem recompressão. Scripts dessa
+  conferência: ver o padrão em `scratchpad` — comparação por `dif` de miniatura é barata e decide
+  a rotação sem ambiguidade; o que ela **não** decide é qual das duas está certa.
+  **Lição: em dúvida de orientação, pedir a referência ao usuário sai mais barato que deduzir** —
+  errei duas vezes deduzindo (girei uma foto correta em 20/11 à tarde e tive de desfazer com
+  `git checkout 4a0d28b -- <foto>`).
 - **`preparar_fotos.py` não sobrescreve `midia/fotos/`**: só traz do bruto o que falta (`--forcar`
   refaz tudo). É o que protege recortes manuais — `20261120_163538.jpg` foi recortada pelo usuário
   para 3530×1848 e é a foto que abre o README da raiz.

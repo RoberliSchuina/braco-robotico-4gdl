@@ -9,9 +9,14 @@ O que faz:
 
 Por que o passo 2 existe: navegador e GitHub respeitam a etiqueta EXIF
 Orientation, mas **Word e python-docx nao** -- uma foto so rotacionada pela
-etiqueta entra de cabeca para baixo no relatorio. Das 12 originais, 10 vinham
-assim (5 a 180 graus). E o conserto precisa ser repetivel: editor de imagem
-costuma reescrever a etiqueta ao salvar, desfazendo a correcao.
+etiqueta entra de cabeca para baixo no relatorio.
+
+ATENCAO -- a etiqueta do bruto NAO e confiavel. Em 6 das 12 fotos ela pedia uma
+rotacao que os pixels exportados JA tinham, e grava-la virou a foto de novo (de
+cabeca para baixo no GitHub). Essas 6 foram substituidas pelos arquivos que o
+autor corrigiu a mao no proprio bruto e hoje ja vem com Orientation = 1. Nenhum
+teste de programa separa "pixels crus" de "pixels ja girados": depois de rodar
+com --forcar, OLHE as fotos.
 
 Por que o passo 1 nao sobrescreve: fotos de fotos/ podem ter sido recortadas a
 mao (foi o caso de 20261120_163538.jpg). Regenerar a partir do bruto apagaria o
@@ -88,6 +93,10 @@ def main():
             giradas += 1
     print("fotos: %d copiadas do bruto (%d giradas), %d ja existentes mantidas%s"
           % (copiadas, giradas, mantidas, " (--forcar refaz todas)" if mantidas else ""))
+    if giradas:
+        print("   CONFIRA as %d giradas: a etiqueta do bruto ja esteve errada neste" % giradas)
+        print("   projeto (pixels exportados ja girados). Se alguma sair de cabeca para")
+        print("   baixo, gire o arquivo no bruto e rode de novo -- ele e copiado byte a byte.")
 
     # conferencia: nenhuma foto pode depender da etiqueta para aparecer certa.
     # Nao consertamos automaticamente -- numa foto ja tratada nao da para saber
