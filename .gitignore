@@ -19,3 +19,11 @@ Fotos e videos/
 midia/proxy/
 midia/cartoes/
 midia/filtro.txt
+
+# Desenho de corte da base de acrilico -- FORA do repositorio desde 2026-11-20
+# (pedido do usuario: "utilizei outra referencia"). O gerador cad/base_suporte.py
+# continua versionado e recria estes arquivos localmente, mas eles nao voltam ao
+# GitHub. Historico: git show 0af3f1f -- cad/corte_base_acrilico.dxf
+cad/corte_base_acrilico.dxf
+cad/corte_base_acrilico.svg
+imagens/base_layout.png

@@ -27,6 +27,7 @@ Entregas: BOM, peças 3D (Tinkercad, uma por arquivo) + STL, protótipo montado,
 - [x] 2026-10-29: **sketch de testes de bancada** (fundido no firmware único em 2026-11-09 e apagado)
 - [x] 2026-10-29: **`JUNTA_LIGADA[]` no firmware** — servo S1 (base) com defeito; o braço opera com 3 juntas (ver "Firmware — fatos não óbvios"). Religar quando o servo for trocado
 - [x] 2026-10-31: **base de apoio em acrílico** `cad/base_suporte.py` -> `cad/corte_base_acrilico.dxf`/`.svg` (corte a laser) + seção 5 nova em `verificacao_eletrica.py`; ver "Base de apoio"
+- [x] 2026-11-20: **o DESENHO da base saiu do repositório** (pedido do usuário: "utilizei outra referência"). `corte_base_acrilico.dxf`/`.svg` e `imagens/base_layout.png` foram tirados do git (`git rm --cached`) e entraram no `.gitignore` — **o `git add -A` da regra de sincronizar NÃO os traz de volta**. Ficaram no disco do usuário e no histórico (`git show 0af3f1f -- cad/corte_base_acrilico.dxf`). O gerador `cad/base_suporte.py` e o `cad/base_info.json` **continuam versionados** de propósito: o .json é lido por `carga_maxima.py` (limite de tombamento, 593 g) e o script guarda o cálculo da zona proibida e da queda de tensão. Não reintroduzir o desenho sem o usuário pedir
 - [x] 2026-11-07: **LED RGB de estados** no sketch de bancada + guia HTML; ver "LED RGB de estados"
 - [x] 2026-11-07: **repinagem dos sinais** para D2..D10 em sequência (servos D2-D5, botões D6/D7, LED D8-D10) nos 2 firmwares, guia HTML, esquema, relatório e manual; ver "Firmware — fatos não óbvios"
 - [x] 2026-11-07: **toque no SW do joystick liga o modo joystick** (recurso depois fundido no firmware único)
@@ -53,7 +54,7 @@ Entregas: BOM, peças 3D (Tinkercad, uma por arquivo) + STL, protótipo montado,
 - [x] 2026-11-20: **fotos e vídeo do protótipo em funcionamento** em `midia/` (12 fotos +
   `braco_robotico_demo.mp4`, 1080p, 2 min 27 s, 46 MB). O bruto (7 clipes 8K, 1,4 GB) ficou
   **fora do git**; ver "Mídia do protótipo"
-- [ ] Medir o DSN-VC288 recebido, ajustar `VC288_JANELA` e regerar ANTES de mandar cortar
+- [~] Medir o DSN-VC288 recebido, ajustar `VC288_JANELA` e regerar ANTES de mandar cortar — **em suspenso**: o usuário passou a usar outra referência de base em 2026-11-20 e o desenho saiu do repositório. Só vale se ele voltar a cortar esta chapa
 - [ ] Regerar esquema elétrico, guia HTML, BOM, relatório e manual com a base (medidor, chave, fusível, WAGO, 2 pontos de alimentação por trilho)
 - [ ] Imprimir, montar, calibrar `ANG_MIN/ANG_MAX` e registrar os testes na seção 9.3
 
@@ -67,6 +68,7 @@ python cad/gerar_pecas.py        # ~3 min (renders são a parte lenta) -> STL/, 
 python cad/verificacao.py        # ~4 min: colisões, engrenagens, envelope, torque
 python cad/verificacao_eletrica.py   # ~1 s: consumo, fonte, capacitor, queda, caminho de potência
 python cad/base_suporte.py       # ~20 s: chapa de acrílico -> DXF/SVG de corte + verificação
+                                 #   (DXF/SVG/PNG ficam só no disco: ignorados pelo git desde 20/11)
 python cad/plataforma_mg996r.py  # ~40 s: peça 12 (plataforma para MG996R) -> STL + imagens/ + info.json
 python cad/carga_maxima.py       # ~1 min: carga útil por cenário de servo -> cad/carga_maxima.json
 python cad/mapa_angulos.py       # ~1 min: ângulo de cada servo -> pose/altura/alcance -> cad/mapa_angulos.json
@@ -226,6 +228,8 @@ O arquivo de referência era o sketch de bancada apenas RENOMEADO (byte a byte i
 Pedido do usuário: base que suporte o braço, com a protoboard colada, conexões organizadas para
 servos e fonte, e um DSN-VC288 medindo tensão e corrente em tempo real. Material escolhido por
 ele: **acrílico**. Conexão dos servos escolhida por ele: **sem solda** (protoboard reforçada).
+
+> **O desenho de corte não está mais no repositório** (20/11/2026): o usuário adotou outra referência de base. O que segue abaixo é o raciocínio desta chapa — vale como registro e, sobretudo, pelos números que não dependem do desenho (zona proibida do giro, tombamento, queda de tensão, ligação do DSN-VC288). As cotas da chapa em si podem não descrever mais a base real.
 
 - **Chapa 300 × 260 × 6 mm de PMMA (557 g), cortada a LASER**, não furada à mão — acrílico trinca
   na broca. `cad/base_suporte.py` gera `corte_base_acrilico.dxf` (R12) e `.svg`, camadas CORTE e
